@@ -82,9 +82,11 @@ defmodule BSV.Contract.P2STAS do
   def locking_script(ctx, %{address: address, redeem_address: redeem_address, flags: flags, data: data}) do
     ctx
     |> prefix(address)
+    |> fn ctx -> if swappable(flags), do: p2stas_swap_part(ctx) |> common_part(), else: p2stas_noswap_part(ctx) |> common_part()
     |> p2stas()
     |> suffix(redeem_address, flags, data)
   end
+
 
   @impl true
   def unlocking_script(ctx, %{keypair: keypair}) do
