@@ -97,9 +97,9 @@ defmodule BSV.Contract.P2STAS do
   @impl true
   def unlocking_script(ctx, %{keypair: keypair}) do
     ctx
-    |> push_tx()
     |> sig(keypair.privkey)
     |> push(PubKey.to_binary(keypair.pubkey))
+    |> push_tx()
 
   end
 
