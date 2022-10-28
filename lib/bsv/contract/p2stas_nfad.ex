@@ -1,6 +1,7 @@
-defmodule BSV.Contract.P2STASNFTAD do
+defmodule BSV.Contract.P2STAS_NFAD do
   @moduledoc """
   Pay to S.T.A.S. contract.
+  Non-Fungible-Appendable-Data
 
   P2STAS scripts are used to lock Bitcoin as a STAS token to an [`address`](`t:BSV.Address.t/0`).
   The Bitcoin can later be unlocked using the private key corresponding to the
