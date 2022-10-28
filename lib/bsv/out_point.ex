@@ -19,9 +19,9 @@ defmodule BSV.OutPoint do
 
   @typedoc "OutPoint struct"
   @type t() :: %__MODULE__{
-    hash: Tx.hash(),
-    vout: TxOut.vout()
-  }
+          hash: Tx.hash(),
+          vout: TxOut.vout()
+        }
 
   @doc """
   Parses the given binary into a `t:BSV.OutPoint.t/0`.
@@ -39,8 +39,7 @@ defmodule BSV.OutPoint do
     encoding = Keyword.get(opts, :encoding)
 
     with {:ok, data} <- decode(data, encoding),
-         {:ok, outpoint, _rest} <- Serializable.parse(%__MODULE__{}, data)
-    do
+         {:ok, outpoint, _rest} <- Serializable.parse(%__MODULE__{}, data) do
       {:ok, outpoint}
     end
   end
@@ -57,7 +56,7 @@ defmodule BSV.OutPoint do
         outpoint
 
       {:error, error} ->
-         raise BSV.DecodeError, error
+        raise BSV.DecodeError, error
     end
   end
 
@@ -97,15 +96,15 @@ defmodule BSV.OutPoint do
     |> encode(encoding)
   end
 
-
   defimpl Serializable do
     @impl true
     def parse(outpoint, data) do
       with <<hash::bytes-32, vout::little-32, rest::binary>> <- data do
-        {:ok, struct(outpoint, [
-          hash: hash,
-          vout: vout
-        ]), rest}
+        {:ok,
+         struct(outpoint,
+           hash: hash,
+           vout: vout
+         ), rest}
       end
     end
 

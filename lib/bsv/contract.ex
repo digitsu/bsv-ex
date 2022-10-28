@@ -100,12 +100,12 @@ defmodule BSV.Contract do
 
   @typedoc "BSV Contract struct"
   @type t() :: %__MODULE__{
-    ctx: ctx() | nil,
-    mfa: {module(), atom(), list()},
-    opts: keyword(),
-    subject: non_neg_integer() | UTXO.t(),
-    script: Script.t()
-  }
+          ctx: ctx() | nil,
+          mfa: {module(), atom(), list()},
+          opts: keyword(),
+          subject: non_neg_integer() | UTXO.t(),
+          script: Script.t()
+        }
 
   @typedoc """
   Transaction context.
@@ -128,11 +128,11 @@ defmodule BSV.Contract do
       """
       @spec lock(non_neg_integer(), map(), keyword()) :: Contract.t()
       def lock(satoshis, %{} = params, opts \\ []) do
-        struct(Contract, [
+        struct(Contract,
           mfa: {__MODULE__, :locking_script, [params]},
           opts: opts,
           subject: satoshis
-        ])
+        )
       end
 
       @doc """
@@ -140,11 +140,11 @@ defmodule BSV.Contract do
       """
       @spec unlock(UTXO.t(), map(), keyword()) :: Contract.t()
       def unlock(%UTXO{} = utxo, %{} = params, opts \\ []) do
-        struct(Contract, [
+        struct(Contract,
           mfa: {__MODULE__, :unlocking_script, [params]},
           opts: opts,
           subject: utxo
-        ])
+        )
       end
     end
   end
@@ -183,7 +183,7 @@ defmodule BSV.Contract do
   """
   @spec script_push(t(), atom() | integer() | binary()) :: t()
   def script_push(%__MODULE__{} = contract, val),
-    do: update_in(contract.script, & Script.push(&1, val))
+    do: update_in(contract.script, &Script.push(&1, val))
 
   @doc """
   Returns the size (in bytes) of the contract script.
@@ -220,8 +220,7 @@ defmodule BSV.Contract do
   """
   @spec to_txout(t()) :: TxOut.t()
   def to_txout(%__MODULE__{subject: satoshis} = contract)
-    when is_integer(satoshis)
-  do
+      when is_integer(satoshis) do
     script = to_script(contract)
     struct(TxOut, satoshis: satoshis, script: script)
   end
@@ -246,17 +245,20 @@ defmodule BSV.Contract do
   """
   @spec simulate(module(), map(), map()) :: {:ok, VM.t()} | {:error, VM.t()}
   def simulate(mod, %{} = lock_params, %{} = unlock_params) when is_atom(mod) do
-    %Tx{outputs: [txout]} = lock_tx = TxBuilder.to_tx(%TxBuilder{
-      outputs: [apply(mod, :lock, [1000, lock_params])]
-    })
+    %Tx{outputs: [txout]} =
+      lock_tx =
+      TxBuilder.to_tx(%TxBuilder{
+        outputs: [apply(mod, :lock, [1000, lock_params])]
+      })
 
     utxo = UTXO.from_tx(lock_tx, 0)
 
-    %Tx{inputs: [txin]} = tx = TxBuilder.to_tx(%TxBuilder{
-      inputs: [apply(mod, :unlock, [utxo, unlock_params])]
-    })
+    %Tx{inputs: [txin]} =
+      tx =
+      TxBuilder.to_tx(%TxBuilder{
+        inputs: [apply(mod, :unlock, [utxo, unlock_params])]
+      })
 
     VM.eval(%VM{ctx: {tx, 0, txout}}, txin.script.chunks ++ txout.script.chunks)
   end
-
 end

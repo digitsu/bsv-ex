@@ -42,5 +42,4 @@ defmodule BSV.Contract.Raw do
   def unlocking_script(ctx, %{script: %Script{} = script}) do
     Map.put(ctx, :script, script)
   end
-
 end

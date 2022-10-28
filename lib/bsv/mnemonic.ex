@@ -23,7 +23,7 @@ defmodule BSV.Mnemonic do
   @lang Application.get_env(:bsv, :lang, "en")
 
   @wordlist :code.priv_dir(:bsv)
-            |> Path.join("bip39/#{ @lang }.txt")
+            |> Path.join("bip39/#{@lang}.txt")
             |> File.stream!()
             |> Stream.map(&String.trim/1)
             |> Enum.to_list()
@@ -51,8 +51,8 @@ defmodule BSV.Mnemonic do
   """
   @spec from_entropy(binary()) :: t()
   def from_entropy(entropy)
-    when is_binary(entropy) and bit_size(entropy) in @allowed_lengths,
-    do: mnemonic(<<entropy::bits, checksum(entropy)::bits>>)
+      when is_binary(entropy) and bit_size(entropy) in @allowed_lengths,
+      do: mnemonic(<<entropy::bits, checksum(entropy)::bits>>)
 
   @doc """
   Returns the entropy from the given `t:BSV.Mnemonic.t/0`.
@@ -132,13 +132,12 @@ defmodule BSV.Mnemonic do
 
   # PBKDF2 iterate function
   defp iterate(_mnemonic, round_num, _hmac_block, result)
-    when round_num == @rounds,
-    do: result
+       when round_num == @rounds,
+       do: result
 
   defp iterate(mnemonic, round_num, hmac_block, result) do
     next_block = Hash.sha512_hmac(hmac_block, mnemonic)
     result = :crypto.exor(next_block, result)
     iterate(mnemonic, round_num + 1, next_block, result)
   end
-
 end

@@ -52,5 +52,4 @@ defmodule BSV.Contract.P2PKH do
     |> sig(keypair.privkey)
     |> push(PubKey.to_binary(keypair.pubkey))
   end
-
 end

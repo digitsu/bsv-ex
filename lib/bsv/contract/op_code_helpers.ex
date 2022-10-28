@@ -28,10 +28,11 @@ defmodule BSV.Contract.OpCodeHelpers do
   # Iterrates over all opcodes
   # Defines a function to push the specified opcode onto the contract script
   Enum.each(OpCode.all(), fn {op, _} ->
-    key = op
-    |> Atom.to_string()
-    |> String.downcase()
-    |> String.to_atom()
+    key =
+      op
+      |> Atom.to_string()
+      |> String.downcase()
+      |> String.to_atom()
 
     @doc "Pushes the `#{op}` word onto the script."
     @spec unquote(key)(Contract.t()) :: Contract.t()
@@ -56,13 +57,12 @@ defmodule BSV.Contract.OpCodeHelpers do
   `OP_ELSE` and `OP_ENDIF` script words.
   """
   @spec op_if(
-    Contract.t(),
-    (Contract.t() -> Contract.t()),
-    (Contract.t() -> Contract.t())
-  ) :: Contract.t()
+          Contract.t(),
+          (Contract.t() -> Contract.t()),
+          (Contract.t() -> Contract.t())
+        ) :: Contract.t()
   def op_if(%Contract{} = contract, handle_if, handle_else)
-    when is_function(handle_if) and is_function(handle_else)
-  do
+      when is_function(handle_if) and is_function(handle_else) do
     contract
     |> op_if()
     |> handle_if.()
@@ -88,13 +88,12 @@ defmodule BSV.Contract.OpCodeHelpers do
   `OP_ELSE` and `OP_ENDIF` script words.
   """
   @spec op_notif(
-    Contract.t(),
-    (Contract.t() -> Contract.t()),
-    (Contract.t() -> Contract.t())
-  ) :: Contract.t()
+          Contract.t(),
+          (Contract.t() -> Contract.t()),
+          (Contract.t() -> Contract.t())
+        ) :: Contract.t()
   def op_notif(%Contract{} = contract, handle_if, handle_else)
-    when is_function(handle_if) and is_function(handle_else)
-  do
+      when is_function(handle_if) and is_function(handle_else) do
     contract
     |> op_notif()
     |> handle_if.()
@@ -102,5 +101,4 @@ defmodule BSV.Contract.OpCodeHelpers do
     |> handle_else.()
     |> op_endif()
   end
-
 end

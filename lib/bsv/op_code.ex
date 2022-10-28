@@ -102,7 +102,6 @@ defmodule BSV.OpCode do
     OP_ABS: 144,
     OP_NOT: 145,
     OP_0NOTEQUAL: 146,
-
     OP_ADD: 147,
     OP_SUB: 148,
     OP_MUL: 149,
@@ -110,7 +109,6 @@ defmodule BSV.OpCode do
     OP_MOD: 151,
     OP_LSHIFT: 152,
     OP_RSHIFT: 153,
-
     OP_BOOLAND: 154,
     OP_BOOLOR: 155,
     OP_NUMEQUAL: 156,
@@ -122,7 +120,6 @@ defmodule BSV.OpCode do
     OP_GREATERTHANOREQUAL: 162,
     OP_MIN: 163,
     OP_MAX: 164,
-
     OP_WITHIN: 165,
 
     # crypto
@@ -136,7 +133,6 @@ defmodule BSV.OpCode do
     OP_CHECKSIGVERIFY: 173,
     OP_CHECKMULTISIG: 174,
     OP_CHECKMULTISIGVERIFY: 175,
-
     OP_CHECKLOCKTIMEVERIFY: 177,
     OP_CHECKSEQUENCEVERIFY: 178,
 
@@ -259,5 +255,4 @@ defmodule BSV.OpCode do
       opcode -> opcode
     end
   end
-
 end

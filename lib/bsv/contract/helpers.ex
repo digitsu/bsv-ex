@@ -31,9 +31,9 @@ defmodule BSV.Contract.Helpers do
   """
   @spec decode_uint(Contract.t(), atom()) :: Contract.t()
   def decode_uint(contract, endianess \\ :little)
+
   def decode_uint(%Contract{} = contract, endianess)
-    when endianess in [:le, :little]
-  do
+      when endianess in [:le, :little] do
     contract
     |> push(<<0>>)
     |> op_cat()
@@ -42,8 +42,8 @@ defmodule BSV.Contract.Helpers do
 
   # TODO encode big endian decoding
   def decode_uint(%Contract{} = _contract, endianess)
-    when endianess in [:be, :big],
-    do: raise "Big endian decoding not implemented yet"
+      when endianess in [:be, :big],
+      do: raise("Big endian decoding not implemented yet")
 
   @doc """
   Iterates over the given enumerable, invoking the `handle_each` function on
@@ -59,23 +59,22 @@ defmodule BSV.Contract.Helpers do
       end)
   """
   @spec each(
-    Contract.t(),
-    Enum.t(),
-    (Enum.element(), Contract.t() -> Contract.t())
-  ) :: Contract.t()
+          Contract.t(),
+          Enum.t(),
+          (Enum.element(), Contract.t() -> Contract.t())
+        ) :: Contract.t()
   def each(%Contract{} = contract, enum, handle_each)
-    when is_function(handle_each),
-    do: Enum.reduce(enum, contract, handle_each)
+      when is_function(handle_each),
+      do: Enum.reduce(enum, contract, handle_each)
 
   @doc """
   Pushes the given data onto the script. If a list of data elements is given,
   each will be pushed to the script as seperate pushdata elements.
   """
   @spec push(
-      Contract.t(),
-      atom() | binary() | integer() |
-      list(atom() | binary() | integer())
-    ) ::Contract.t()
+          Contract.t(),
+          atom() | binary() | integer() | list(atom() | binary() | integer())
+        ) :: Contract.t()
   def push(%Contract{} = contract, data) when is_list(data),
     do: each(contract, data, &push(&2, &1))
 
@@ -96,14 +95,14 @@ defmodule BSV.Contract.Helpers do
       end)
   """
   @spec repeat(
-    Contract.t(),
-    non_neg_integer(),
-    (non_neg_integer(), Contract.t() -> Contract.t())
-  ) :: Contract.t()
+          Contract.t(),
+          non_neg_integer(),
+          (non_neg_integer(), Contract.t() -> Contract.t())
+        ) :: Contract.t()
   def repeat(%Contract{} = contract, loops, handle_each)
-    when is_integer(loops) and loops > 0
-    and is_function(handle_each),
-    do: Enum.reduce(0..loops-1, contract, handle_each)
+      when is_integer(loops) and loops > 0 and
+             is_function(handle_each),
+      do: Enum.reduce(0..(loops - 1), contract, handle_each)
 
   @doc """
   Reverses the top item on the stack.
@@ -113,15 +112,14 @@ defmodule BSV.Contract.Helpers do
   """
   @spec reverse(Contract.t(), integer()) :: Contract.t()
   def reverse(%Contract{} = contract, length)
-    when is_integer(length) and length > 1
-  do
+      when is_integer(length) and length > 1 do
     contract
-    |> repeat(length-1, fn _i, contract ->
+    |> repeat(length - 1, fn _i, contract ->
       contract
       |> op_1()
       |> op_split()
     end)
-    |> repeat(length-1, fn _i, contract ->
+    |> repeat(length - 1, fn _i, contract ->
       contract
       |> op_swap()
       |> op_cat()
@@ -143,9 +141,9 @@ defmodule BSV.Contract.Helpers do
     do: each(contract, privkey, &sig(&2, &1))
 
   def sig(
-    %Contract{ctx: {tx, index}, opts: opts, subject: %UTXO{txout: txout}} = contract,
-    %PrivKey{} = privkey
-  ) do
+        %Contract{ctx: {tx, index}, opts: opts, subject: %UTXO{txout: txout}} = contract,
+        %PrivKey{} = privkey
+      ) do
     signature = Sig.sign(tx, index, txout, privkey, opts)
     Contract.script_push(contract, signature)
   end
@@ -209,5 +207,4 @@ defmodule BSV.Contract.Helpers do
   end
 
   def trim(%Contract{} = contract, 0), do: contract
-
 end

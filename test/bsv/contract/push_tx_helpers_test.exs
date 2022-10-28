@@ -5,13 +5,16 @@ defmodule BSV.Contract.PushTxHelpersTest do
 
   @prev_txout %TxOut{
     satoshis: 50000,
-    script: %Script{chunks: [
-      :OP_DUP,
-      :OP_HASH160,
-      <<47, 105, 50, 137, 102, 179, 60, 141, 131, 76, 2, 71, 24, 254, 231, 1, 101, 139, 55, 71>>,
-      :OP_EQUALVERIFY,
-      :OP_CHECKSIG
-    ]}
+    script: %Script{
+      chunks: [
+        :OP_DUP,
+        :OP_HASH160,
+        <<47, 105, 50, 137, 102, 179, 60, 141, 131, 76, 2, 71, 24, 254, 231, 1, 101, 139, 55,
+          71>>,
+        :OP_EQUALVERIFY,
+        :OP_CHECKSIG
+      ]
+    }
   }
   @test_txin %TxIn{
     outpoint: %OutPoint{
@@ -37,8 +40,10 @@ defmodule BSV.Contract.PushTxHelpersTest do
 
     test "get_prevouts_hash/1 puts prev outpoints hash on top of stack", %{contract: contract} do
       %{script: script} = PushTxHelpers.get_prevouts_hash(contract)
-      hash = OutPoint.to_binary(@test_txin.outpoint)
-      |> Hash.sha256_sha256()
+
+      hash =
+        OutPoint.to_binary(@test_txin.outpoint)
+        |> Hash.sha256_sha256()
 
       assert {:ok, vm} = VM.eval(%VM{}, script)
       assert vm.stack == [hash, @preimage]
@@ -106,10 +111,14 @@ defmodule BSV.Contract.PushTxHelpersTest do
 
   describe "push_tx/1" do
     test "pushes the tx preimage onto the stack" do
-      %{script: script} = PushTxHelpers.push_tx(%Contract{ctx: {@test_tx, 0}, subject: %UTXO{
-        outpoint: @test_txin.outpoint,
-        txout: @prev_txout
-      }})
+      %{script: script} =
+        PushTxHelpers.push_tx(%Contract{
+          ctx: {@test_tx, 0},
+          subject: %UTXO{
+            outpoint: @test_txin.outpoint,
+            txout: @prev_txout
+          }
+        })
 
       assert {:ok, vm} = VM.eval(%VM{}, script)
       assert vm.stack == [@preimage]
@@ -174,9 +183,10 @@ defmodule BSV.Contract.PushTxHelpersTest do
     end
 
     test "optimal check tx has 50% chance of not working" do
-      assert {:ok, vm} = Contract.simulate(TestContract, %{optimized: true, extra_bytes: true}, %{})
+      assert {:ok, vm} =
+               Contract.simulate(TestContract, %{optimized: true, extra_bytes: true}, %{})
+
       refute VM.valid?(vm)
     end
   end
-
 end

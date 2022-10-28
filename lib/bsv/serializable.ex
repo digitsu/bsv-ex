@@ -17,5 +17,4 @@ defprotocol BSV.Serializable do
   """
   @spec serialize(t()) :: binary()
   def serialize(type)
-
 end

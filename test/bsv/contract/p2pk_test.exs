@@ -36,14 +36,17 @@ defmodule BSV.Contract.P2PKTest do
 
   describe "Contract.simulate/3" do
     test "evaluates as valid if signed with correct keys" do
-      assert {:ok, vm} = Contract.simulate(P2PK, %{pubkey: @keypair.pubkey}, %{privkey: @keypair.privkey})
+      assert {:ok, vm} =
+               Contract.simulate(P2PK, %{pubkey: @keypair.pubkey}, %{privkey: @keypair.privkey})
+
       assert VM.valid?(vm)
     end
 
     test "evaluates as invalid if signed with incorrect key" do
-      assert {:ok, vm} = Contract.simulate(P2PK, %{pubkey: @keypair.pubkey}, %{privkey: PrivKey.new()})
+      assert {:ok, vm} =
+               Contract.simulate(P2PK, %{pubkey: @keypair.pubkey}, %{privkey: PrivKey.new()})
+
       refute VM.valid?(vm)
     end
   end
-
 end

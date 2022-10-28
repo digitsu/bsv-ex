@@ -14,9 +14,9 @@ defmodule BSV.PubKey do
 
   @typedoc "Public key struct"
   @type t() :: %__MODULE__{
-    point: Point.t(),
-    compressed: boolean()
-  }
+          point: Point.t(),
+          compressed: boolean()
+        }
 
   @doc """
   Parses the given binary into a `t:BSV.PubKey.t/0`.
@@ -50,6 +50,7 @@ defmodule BSV.PubKey do
     else
       {:ok, pubkey} ->
         {:error, {:invalid_pubkey, byte_size(pubkey)}}
+
       error ->
         error
     end
@@ -65,8 +66,10 @@ defmodule BSV.PubKey do
     case from_binary(pubkey, opts) do
       {:ok, pubkey} ->
         pubkey
+
       {:error, {:invalid_pubkey, _length} = error} ->
         raise BSV.DecodeError, error
+
       {:error, error} ->
         raise error
     end
@@ -99,9 +102,9 @@ defmodule BSV.PubKey do
   @spec to_binary(t(), keyword()) :: binary()
   def to_binary(%__MODULE__{point: point, compressed: compressed}, opts \\ []) do
     encoding = Keyword.get(opts, :encoding)
+
     %Key{point: point, compressed: compressed}
     |> Key.to_pubkey()
     |> encode(encoding)
   end
-
 end

@@ -2,8 +2,8 @@ defmodule BSV.PrivKeyTest do
   use ExUnit.Case, async: true
   alias BSV.PrivKey
 
-  @privkey_bin <<60, 255, 4, 99, 48, 136, 98, 46, 69, 153, 220, 46, 191, 132, 63,
-    130, 206, 243, 70, 59, 145, 13, 52, 167, 82, 161, 54, 34, 171, 174, 55, 155>>
+  @privkey_bin <<60, 255, 4, 99, 48, 136, 98, 46, 69, 153, 220, 46, 191, 132, 63, 130, 206, 243,
+                 70, 59, 145, 13, 52, 167, 82, 161, 54, 34, 171, 174, 55, 155>>
   @privkey %PrivKey{d: @privkey_bin}
   @privkey_hex "3cff04633088622e4599dc2ebf843f82cef3463b910d34a752a13622abae379b"
   @privkey_wif "KyGHAK8MNohVPdeGPYXveiAbTfLARVrQuJVtd3qMqN41UEnTWDkF"
@@ -117,8 +117,8 @@ defmodule BSV.PrivKeyTest do
       wif =
         PrivKey.from_binary!(@privkey_bin, compressed: false)
         |> PrivKey.to_wif()
+
       assert wif == @privkey_wif2
     end
   end
-
 end

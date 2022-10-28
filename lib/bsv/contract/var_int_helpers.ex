@@ -99,8 +99,7 @@ defmodule BSV.Contract.VarIntHelpers do
 
   # Shared VarInt switch statement
   defp varint_switch(contract, handle_varint)
-    when is_function(handle_varint)
-  do
+       when is_function(handle_varint) do
     contract
     |> op_1()
     |> op_split()
@@ -122,5 +121,4 @@ defmodule BSV.Contract.VarIntHelpers do
       end)
     end)
   end
-
 end

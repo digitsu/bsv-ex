@@ -15,13 +15,13 @@ defmodule BSV.BlockHeader do
 
   @typedoc "Block header struct"
   @type t() :: %__MODULE__{
-    version: non_neg_integer(),
-    prev_hash: <<_::256>>,
-    merkle_root: Block.merkle_root(),
-    time: non_neg_integer(),
-    bits: non_neg_integer(),
-    nonce: non_neg_integer()
-  }
+          version: non_neg_integer(),
+          prev_hash: <<_::256>>,
+          merkle_root: Block.merkle_root(),
+          time: non_neg_integer(),
+          bits: non_neg_integer(),
+          nonce: non_neg_integer()
+        }
 
   @doc """
   Parses the given binary into a `t:BSV.BlockHeader.t/0`.
@@ -39,8 +39,7 @@ defmodule BSV.BlockHeader do
     encoding = Keyword.get(opts, :encoding)
 
     with {:ok, data} <- decode(data, encoding),
-         {:ok, header, _rest} <- Serializable.parse(%__MODULE__{}, data)
-    do
+         {:ok, header, _rest} <- Serializable.parse(%__MODULE__{}, data) do
       {:ok, header}
     end
   end
@@ -79,28 +78,27 @@ defmodule BSV.BlockHeader do
     |> encode(encoding)
   end
 
-
   defimpl Serializable do
     @impl true
     def parse(header, data) do
       with <<
-            version::little-32,
-            prev_hash::binary-size(32),
-            merkle_root::binary-size(32),
-            time::little-32,
-            bits::little-32,
-            nonce::little-32,
-            rest::binary
-          >> <- data
-      do
-        {:ok, struct(header, [
-          version: version,
-          prev_hash: prev_hash,
-          merkle_root: merkle_root,
-          time: time,
-          bits: bits,
-          nonce: nonce
-        ]), rest}
+             version::little-32,
+             prev_hash::binary-size(32),
+             merkle_root::binary-size(32),
+             time::little-32,
+             bits::little-32,
+             nonce::little-32,
+             rest::binary
+           >> <- data do
+        {:ok,
+         struct(header,
+           version: version,
+           prev_hash: prev_hash,
+           merkle_root: merkle_root,
+           time: time,
+           bits: bits,
+           nonce: nonce
+         ), rest}
       else
         _data ->
           {:error, :invalid_header}
@@ -109,13 +107,13 @@ defmodule BSV.BlockHeader do
 
     @impl true
     def serialize(%{
-      version: version,
-      prev_hash: prev_hash,
-      merkle_root: merkle_root,
-      time: time,
-      bits: bits,
-      nonce: nonce
-    }) do
+          version: version,
+          prev_hash: prev_hash,
+          merkle_root: merkle_root,
+          time: time,
+          bits: bits,
+          nonce: nonce
+        }) do
       <<
         version::little-32,
         prev_hash::binary,
@@ -126,5 +124,4 @@ defmodule BSV.BlockHeader do
       >>
     end
   end
-
 end

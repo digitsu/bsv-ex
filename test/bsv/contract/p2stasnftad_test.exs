@@ -1,4 +1,4 @@
-defmodule BSV.Contract.P2PKHTest do
+defmodule BSV.Contract.P2STASNFTTest do
   use ExUnit.Case, async: true
   alias BSV.Contract.P2PKH
   alias BSV.{Address, Contract, KeyPair, PrivKey, Script, TxOut, UTXO, VM}

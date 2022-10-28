@@ -33,5 +33,4 @@ defmodule BSV.TxTest do
       refute Tx.is_coinbase?(tx)
     end
   end
-
 end

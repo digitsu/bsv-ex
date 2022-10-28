@@ -75,16 +75,35 @@ defmodule BSV.ScriptTest do
 
   describe "Script.to_asm/1" do
     test "serialises p2pkh script as ASM string" do
-      script = %Script{chunks: [:OP_DUP, :OP_HASH160, <<90, 232, 102, 175, 157, 225, 6, 132, 125, 230, 17, 30, 95, 31, 170, 22, 139, 43, 230, 137>>, :OP_EQUALVERIFY, :OP_CHECKSIG]}
+      script = %Script{
+        chunks: [
+          :OP_DUP,
+          :OP_HASH160,
+          <<90, 232, 102, 175, 157, 225, 6, 132, 125, 230, 17, 30, 95, 31, 170, 22, 139, 43, 230,
+            137>>,
+          :OP_EQUALVERIFY,
+          :OP_CHECKSIG
+        ]
+      }
+
       assert Script.to_asm(script) == @p2pkh_asm
     end
   end
 
   describe "Script.to_binary/1" do
     test "serialises p2pkh script as hex string" do
-      script = %Script{chunks: [:OP_DUP, :OP_HASH160, <<90, 232, 102, 175, 157, 225, 6, 132, 125, 230, 17, 30, 95, 31, 170, 22, 139, 43, 230, 137>>, :OP_EQUALVERIFY, :OP_CHECKSIG]}
+      script = %Script{
+        chunks: [
+          :OP_DUP,
+          :OP_HASH160,
+          <<90, 232, 102, 175, 157, 225, 6, 132, 125, 230, 17, 30, 95, 31, 170, 22, 139, 43, 230,
+            137>>,
+          :OP_EQUALVERIFY,
+          :OP_CHECKSIG
+        ]
+      }
+
       assert Script.to_binary(script, encoding: :hex) == @p2pkh_hex
     end
   end
-
 end

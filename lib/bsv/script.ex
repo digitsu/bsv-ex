@@ -20,19 +20,19 @@ defmodule BSV.Script do
 
   @typedoc "Script struct"
   @type t() :: %__MODULE__{
-    chunks: list(chunk()),
-    coinbase: nil | binary()
-  }
+          chunks: list(chunk()),
+          coinbase: nil | binary()
+        }
 
   @typedoc "Script chunk"
   @type chunk() :: atom() | binary()
 
   @typedoc "Coinbase data"
   @type coinbase_data() :: %{
-    height: integer(),
-    data: binary(),
-    nonce: binary()
-  }
+          height: integer(),
+          data: binary(),
+          nonce: binary()
+        }
 
   @doc """
   Parses the given ASM encoded string into a `t:BSV.Script.t/0`.
@@ -52,9 +52,10 @@ defmodule BSV.Script do
   """
   @spec from_asm(binary()) :: {:ok, t()} | {:error, term()}
   def from_asm(data) when is_binary(data) do
-    chunks = data
-    |> String.split(" ")
-    |> Enum.map(&parse_asm_chunk/1)
+    chunks =
+      data
+      |> String.split(" ")
+      |> Enum.map(&parse_asm_chunk/1)
 
     {:ok, struct(__MODULE__, chunks: chunks)}
   rescue
@@ -72,6 +73,7 @@ defmodule BSV.Script do
     case from_asm(data) do
       {:ok, script} ->
         script
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
@@ -104,8 +106,7 @@ defmodule BSV.Script do
     encoding = Keyword.get(opts, :encoding)
 
     with {:ok, data} <- decode(data, encoding),
-         {:ok, chunks} <- parse_bytes(data)
-    do
+         {:ok, chunks} <- parse_bytes(data) do
       {:ok, struct(__MODULE__, chunks: chunks)}
     end
   end
@@ -120,6 +121,7 @@ defmodule BSV.Script do
     case from_binary(data, opts) do
       {:ok, script} ->
         script
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
@@ -137,6 +139,7 @@ defmodule BSV.Script do
           data: data,
           nonce: nonce
         }
+
       data ->
         data
     end
@@ -172,7 +175,7 @@ defmodule BSV.Script do
     do: push_chunk(script, data)
 
   def push(%__MODULE__{} = script, data) when data in 0..16,
-    do: push_chunk(script, String.to_atom("OP_#{ data }"))
+    do: push_chunk(script, String.to_atom("OP_#{data}"))
 
   def push(%__MODULE__{} = script, data) when is_integer(data),
     do: push_chunk(script, ScriptNum.encode(data))
@@ -222,8 +225,7 @@ defmodule BSV.Script do
   def to_binary(script, opts \\ [])
 
   def to_binary(%__MODULE__{chunks: [], coinbase: data}, opts)
-    when is_binary(data)
-  do
+      when is_binary(data) do
     encoding = Keyword.get(opts, :encoding)
     encode(data, encoding)
   end
@@ -250,8 +252,7 @@ defmodule BSV.Script do
   defp parse_bytes(<<>>, chunks), do: {:ok, Enum.reverse(chunks)}
 
   defp parse_bytes(<<size::integer, chunk::bytes-size(size), data::binary>>, chunks)
-    when size > 0 and size < 76
-  do
+       when size > 0 and size < 76 do
     parse_bytes(data, [chunk | chunks])
   end
 
@@ -274,7 +275,7 @@ defmodule BSV.Script do
 
   # Pushes the chunk onto the script
   defp push_chunk(%__MODULE__{} = script, data),
-    do: update_in(script.chunks, & Enum.concat(&1, [data]))
+    do: update_in(script.chunks, &Enum.concat(&1, [data]))
 
   # Serilises the Script chunk as an ASM chunk
   defp serialize_asm_chunk(:OP_1NEGATE), do: "-1"
@@ -293,18 +294,24 @@ defmodule BSV.Script do
   end
 
   defp serialize_chunks([chunk | chunks], data) when is_binary(chunk) do
-    suffix = case byte_size(chunk) do
-      op when op > 0 and op < 76 ->
-        <<op::integer, chunk::binary>>
-      len when len < 0x100 ->
-        <<76::integer, len::integer, chunk::binary>>
-      len when len < 0x10000 ->
-        <<77::integer, len::little-16, chunk::binary>>
-      len when len < 0x100000000 ->
-        <<78::integer, len::little-32, chunk::binary>>
-      op -> << op::integer >>
-    end
+    suffix =
+      case byte_size(chunk) do
+        op when op > 0 and op < 76 ->
+          <<op::integer, chunk::binary>>
+
+        len when len < 0x100 ->
+          <<76::integer, len::integer, chunk::binary>>
+
+        len when len < 0x10000 ->
+          <<77::integer, len::little-16, chunk::binary>>
+
+        len when len < 0x100000000 ->
+          <<78::integer, len::little-32, chunk::binary>>
+
+        op ->
+          <<op::integer>>
+      end
+
     serialize_chunks(chunks, data <> suffix)
   end
-
 end

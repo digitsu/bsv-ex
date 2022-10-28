@@ -8,7 +8,7 @@ defmodule BSV.TxIn do
   A TxIn spends a previous output by concatenating the unlocking script with the
   locking script in the order:
 
-		  unlocking_script <> locking_script
+    unlocking_script <> locking_script
 
   The entire script is evaluated and if it returns a truthy value, the output is
   unlocked and spent.
@@ -27,10 +27,10 @@ defmodule BSV.TxIn do
 
   @typedoc "TxIn struct"
   @type t() :: %__MODULE__{
-    outpoint: OutPoint.t(),
-    script: Script.t(),
-    sequence: non_neg_integer()
-  }
+          outpoint: OutPoint.t(),
+          script: Script.t(),
+          sequence: non_neg_integer()
+        }
 
   @typedoc """
   Vin - Vector of an input in a Bitcoin transaction
@@ -55,8 +55,7 @@ defmodule BSV.TxIn do
     encoding = Keyword.get(opts, :encoding)
 
     with {:ok, data} <- decode(data, encoding),
-         {:ok, txin, _rest} <- Serializable.parse(%__MODULE__{}, data)
-    do
+         {:ok, txin, _rest} <- Serializable.parse(%__MODULE__{}, data) do
       {:ok, txin}
     end
   end
@@ -102,33 +101,35 @@ defmodule BSV.TxIn do
     |> encode(encoding)
   end
 
-
   defimpl Serializable do
     @impl true
     def parse(txin, data) do
       with {:ok, outpoint, data} <- Serializable.parse(%OutPoint{}, data),
            {:ok, script, data} <- VarInt.parse_data(data),
-           <<sequence::little-32, rest::binary>> = data
-      do
-        script = case OutPoint.is_null?(outpoint) do
-          false -> Script.from_binary!(script)
-          true -> %Script{coinbase: script}
-        end
+           <<sequence::little-32, rest::binary>> = data do
+        script =
+          case OutPoint.is_null?(outpoint) do
+            false -> Script.from_binary!(script)
+            true -> %Script{coinbase: script}
+          end
 
-        {:ok, struct(txin, [
-          outpoint: outpoint,
-          script: script,
-          sequence: sequence
-        ]), rest}
+        {:ok,
+         struct(txin,
+           outpoint: outpoint,
+           script: script,
+           sequence: sequence
+         ), rest}
       end
     end
 
     @impl true
     def serialize(%{outpoint: outpoint, script: script, sequence: sequence}) do
       outpoint_data = Serializable.serialize(outpoint)
-      script_data = script
-      |> Script.to_binary()
-      |> VarInt.encode_binary()
+
+      script_data =
+        script
+        |> Script.to_binary()
+        |> VarInt.encode_binary()
 
       <<
         outpoint_data::binary,
@@ -137,5 +138,4 @@ defmodule BSV.TxIn do
       >>
     end
   end
-
 end

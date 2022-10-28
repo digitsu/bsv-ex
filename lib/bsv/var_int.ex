@@ -39,6 +39,7 @@ defmodule BSV.VarInt do
     case decode(data) do
       {:ok, int} ->
         int
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
@@ -71,6 +72,7 @@ defmodule BSV.VarInt do
     case decode_binary(data) do
       {:ok, data} ->
         data
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
@@ -89,16 +91,18 @@ defmodule BSV.VarInt do
   """
   @spec encode(integer()) :: binary()
   def encode(int)
-    when is_integer(int)
-    and int >= 0 and int <= @max_int64
-  do
+      when is_integer(int) and
+             int >= 0 and int <= @max_int64 do
     case int do
       int when int < 254 ->
         <<int::integer>>
+
       int when int < 0x10000 ->
         <<253, int::little-16>>
+
       int when int < 0x100000000 ->
         <<254, int::little-32>>
+
       int ->
         <<255, int::little-64>>
     end
@@ -114,9 +118,8 @@ defmodule BSV.VarInt do
   """
   @spec encode_binary(binary()) :: binary()
   def encode_binary(data)
-    when is_binary(data)
-    and byte_size(data) <= @max_int64
-  do
+      when is_binary(data) and
+             byte_size(data) <= @max_int64 do
     size = byte_size(data) |> encode()
     size <> data
   end
@@ -134,12 +137,16 @@ defmodule BSV.VarInt do
   @spec parse_data(binary()) :: {:ok, binary(), binary()} | {:error, term()}
   def parse_data(<<253, int::little-16, data::bytes-size(int), rest::binary>>),
     do: {:ok, data, rest}
+
   def parse_data(<<254, int::little-32, data::bytes-size(int), rest::binary>>),
     do: {:ok, data, rest}
+
   def parse_data(<<255, int::little-64, data::bytes-size(int), rest::binary>>),
     do: {:ok, data, rest}
+
   def parse_data(<<int::integer, data::bytes-size(int), rest::binary>>),
     do: {:ok, data, rest}
+
   def parse_data(<<_data::binary>>),
     do: {:error, :invalid_varint}
 
@@ -157,6 +164,7 @@ defmodule BSV.VarInt do
   def parse_int(<<254, int::little-32, rest::binary>>), do: {:ok, int, rest}
   def parse_int(<<255, int::little-64, rest::binary>>), do: {:ok, int, rest}
   def parse_int(<<int::integer, rest::binary>>), do: {:ok, int, rest}
+
   def parse_int(<<_data::binary>>),
     do: {:error, :invalid_varint}
 
@@ -166,8 +174,8 @@ defmodule BSV.VarInt do
   `Serializable.t/0`.
   """
   @spec parse_items(binary(), Serializable.t()) ::
-    {:ok, list(Serializable.t()), binary()} |
-    {:error, term()}
+          {:ok, list(Serializable.t()), binary()}
+          | {:error, term()}
   def parse_items(data, mod) when is_binary(data) and is_atom(mod) do
     with {:ok, int, data} <- parse_int(data) do
       parse_items(data, int, mod)
@@ -185,5 +193,4 @@ defmodule BSV.VarInt do
       parse_items(data, num, mod, [item | result])
     end
   end
-
 end

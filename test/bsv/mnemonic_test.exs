@@ -73,5 +73,4 @@ defmodule BSV.MnemonicTest do
       assert length(Mnemonic.wordlist()) == 2048
     end
   end
-
 end

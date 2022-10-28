@@ -5,13 +5,16 @@ defmodule BSV.SigTest do
 
   @prev_txout %TxOut{
     satoshis: 50000,
-    script: %Script{chunks: [
-      :OP_DUP,
-      :OP_HASH160,
-      <<47, 105, 50, 137, 102, 179, 60, 141, 131, 76, 2, 71, 24, 254, 231, 1, 101, 139, 55, 71>>,
-      :OP_EQUALVERIFY,
-      :OP_CHECKSIG
-    ]}
+    script: %Script{
+      chunks: [
+        :OP_DUP,
+        :OP_HASH160,
+        <<47, 105, 50, 137, 102, 179, 60, 141, 131, 76, 2, 71, 24, 254, 231, 1, 101, 139, 55,
+          71>>,
+        :OP_EQUALVERIFY,
+        :OP_CHECKSIG
+      ]
+    }
   }
   @prev_tx %Tx{outputs: [@prev_txout]}
   @test_txin %TxIn{
@@ -32,21 +35,26 @@ defmodule BSV.SigTest do
 
   describe "Sig.sighash/4" do
     test "must return the correct sighash" do
-      sighash = Sig.sighash(@test_tx, 0, @prev_txout, 65)
-      |> Util.encode(:hex)
+      sighash =
+        Sig.sighash(@test_tx, 0, @prev_txout, 65)
+        |> Util.encode(:hex)
+
       assert sighash == @test_sighash
     end
 
     test "Bitcoin ABC test vectors" do
       [_ | vectors] = @vectors_abc
+
       for [rawtx, script, vin, sighash_type, sighash] <- vectors do
         tx = Tx.from_binary!(rawtx, encoding: :hex)
         subscript = Script.from_binary!(script, encoding: :hex)
         txout = %TxOut{script: subscript}
 
-        res = Sig.sighash(tx, vin, txout, sighash_type)
-        |> Util.reverse_bin()
-        |> Base.encode16(case: :lower)
+        res =
+          Sig.sighash(tx, vin, txout, sighash_type)
+          |> Util.reverse_bin()
+          |> Base.encode16(case: :lower)
+
         assert res == sighash
       end
     end
@@ -55,14 +63,17 @@ defmodule BSV.SigTest do
     @tag :pending
     test "Bitcoin Core test vectors" do
       [_ | vectors] = @vectors_btc
+
       for [rawtx, script, vin, sighash_type, sighash] <- vectors do
         tx = Tx.from_binary!(rawtx, encoding: :hex)
         subscript = Script.from_binary!(script, encoding: :hex)
         txout = %TxOut{script: subscript}
 
-        res = Sig.sighash(tx, vin, txout, sighash_type)
-        |> Util.reverse_bin()
-        |> Base.encode16(case: :lower)
+        res =
+          Sig.sighash(tx, vin, txout, sighash_type)
+          |> Util.reverse_bin()
+          |> Base.encode16(case: :lower)
+
         assert res == sighash
       end
     end
@@ -78,8 +89,13 @@ defmodule BSV.SigTest do
 
   describe "Sig.verify/5" do
     test "must verify the signature" do
-      assert Sig.verify(@test_signature, @test_tx, 0, @prev_txout, PubKey.from_privkey(@test_privkey))
+      assert Sig.verify(
+               @test_signature,
+               @test_tx,
+               0,
+               @prev_txout,
+               PubKey.from_privkey(@test_privkey)
+             )
     end
   end
-
 end

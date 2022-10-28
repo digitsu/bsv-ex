@@ -3,9 +3,8 @@ defmodule BSV.AddressTest do
   alias BSV.Address
   alias BSV.PubKey
 
-  @pubkey_bytes <<3, 248, 31, 140, 139, 144, 245, 236, 6, 238, 66, 69, 234, 177,
-    102, 232, 175, 144, 63, 199, 58, 109, 215, 54, 54, 104, 126, 240, 39, 135,
-    10, 190, 57>>
+  @pubkey_bytes <<3, 248, 31, 140, 139, 144, 245, 236, 6, 238, 66, 69, 234, 177, 102, 232, 175,
+                  144, 63, 199, 58, 109, 215, 54, 54, 104, 126, 240, 39, 135, 10, 190, 57>>
   @pubkey PubKey.from_binary!(@pubkey_bytes)
   @address Address.from_pubkey(@pubkey)
   @address_str "18cqNbEBxkAttxcZLuH9LWhZJPd1BNu1A5"
@@ -63,5 +62,4 @@ defmodule BSV.AddressTest do
       assert address == @address_str
     end
   end
-
 end

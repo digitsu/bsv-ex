@@ -47,19 +47,19 @@ defmodule BSV.Sig do
   @default_sighash @sighash_all ||| @sighash_forkid
 
   defguard sighash_all?(sighash_flag)
-    when (sighash_flag &&& 31) == @sighash_all
+           when (sighash_flag &&& 31) == @sighash_all
 
   defguard sighash_none?(sighash_flag)
-    when (sighash_flag &&& 31) == @sighash_none
+           when (sighash_flag &&& 31) == @sighash_none
 
   defguard sighash_single?(sighash_flag)
-    when (sighash_flag &&& 31) == @sighash_single
+           when (sighash_flag &&& 31) == @sighash_single
 
   defguard sighash_forkid?(sighash_flag)
-    when (sighash_flag &&& @sighash_forkid) != 0
+           when (sighash_flag &&& @sighash_forkid) != 0
 
   defguard sighash_anyone_can_pay?(sighash_flag)
-    when (sighash_flag &&& @sighash_anyonecanpay) != 0
+           when (sighash_flag &&& @sighash_anyonecanpay) != 0
 
   @doc """
   Returns the `t:BSV.Sig.sighash_flag/0` of the given sighash type.
@@ -89,8 +89,7 @@ defmodule BSV.Sig do
   """
   @spec preimage(Tx.t(), TxIn.vin(), TxOut.t(), sighash_flag()) :: preimage()
   def preimage(%Tx{inputs: inputs} = tx, vin, %TxOut{} = txout, sighash_type)
-    when sighash_forkid?(sighash_type)
-  do
+      when sighash_forkid?(sighash_type) do
     input = Enum.at(inputs, vin)
 
     # Input prevouts/nSequence
@@ -101,9 +100,10 @@ defmodule BSV.Sig do
     outpoint = OutPoint.to_binary(input.outpoint)
 
     # subscript
-    subscript = txout.script
-    |> Script.to_binary()
-    |> VarInt.encode_binary()
+    subscript =
+      txout.script
+      |> Script.to_binary()
+      |> VarInt.encode_binary()
 
     # Outputs (none/one/all, depending on flags)
     outputs_hash = hash_outputs(tx.outputs, vin, sighash_type)
@@ -118,17 +118,18 @@ defmodule BSV.Sig do
       input.sequence::little-32,
       outputs_hash::binary,
       tx.lock_time::little-32,
-      (sighash_type >>> 0)::little-32
+      sighash_type >>> 0::little-32
     >>
   end
 
   def preimage(%Tx{} = tx, vin, %TxOut{} = txout, sighash_type) do
-    %{script: subscript} = update_in(txout.script.chunks, fn chunks ->
-      Enum.reject(chunks, & &1 == :OP_CODESEPARATOR)
-    end)
+    %{script: subscript} =
+      update_in(txout.script.chunks, fn chunks ->
+        Enum.reject(chunks, &(&1 == :OP_CODESEPARATOR))
+      end)
 
-    tx = update_in(tx.inputs, & update_tx_inputs(&1, vin, subscript, sighash_type))
-    tx = update_in(tx.outputs, & update_tx_outputs(&1, vin, sighash_type))
+    tx = update_in(tx.inputs, &update_tx_inputs(&1, vin, subscript, sighash_type))
+    tx = update_in(tx.outputs, &update_tx_outputs(&1, vin, sighash_type))
 
     Tx.to_binary(tx) <> <<sighash_type::little-32>>
   end
@@ -177,33 +178,32 @@ defmodule BSV.Sig do
 
   # Double hashes the outpoints of the transaction inputs
   defp hash_prevouts(_inputs, sighash_type)
-    when sighash_anyone_can_pay?(sighash_type),
-    do: <<0::256>>
+       when sighash_anyone_can_pay?(sighash_type),
+       do: <<0::256>>
 
   defp hash_prevouts(inputs, _sighash_type) do
     inputs
-    |> Enum.reduce(<<>>, & &2 <> OutPoint.to_binary(&1.outpoint))
+    |> Enum.reduce(<<>>, &(&2 <> OutPoint.to_binary(&1.outpoint)))
     |> Hash.sha256_sha256()
   end
 
   # Double hashes the sequence values of the transaction inputs
   defp hash_sequence(_inputs, sighash_type)
-    when sighash_anyone_can_pay?(sighash_type)
-    or sighash_single?(sighash_type)
-    or sighash_none?(sighash_type),
-    do: <<0::256>>
+       when sighash_anyone_can_pay?(sighash_type) or
+              sighash_single?(sighash_type) or
+              sighash_none?(sighash_type),
+       do: <<0::256>>
 
   defp hash_sequence(inputs, _sighash_type) do
     inputs
-    |> Enum.reduce(<<>>, & &2 <> <<&1.sequence::little-32>>)
+    |> Enum.reduce(<<>>, &(&2 <> <<&1.sequence::little-32>>))
     |> Hash.sha256_sha256()
   end
 
   # Double hashes the transaction outputs
   defp hash_outputs(outputs, vin, sighash_type)
-    when sighash_single?(sighash_type)
-    and vin < length(outputs)
-  do
+       when sighash_single?(sighash_type) and
+              vin < length(outputs) do
     outputs
     |> Enum.at(vin)
     |> TxOut.to_binary()
@@ -211,10 +211,9 @@ defmodule BSV.Sig do
   end
 
   defp hash_outputs(outputs, _vin, sighash_type)
-    when not sighash_none?(sighash_type)
-  do
+       when not sighash_none?(sighash_type) do
     outputs
-    |> Enum.reduce(<<>>, & &2 <> TxOut.to_binary(&1))
+    |> Enum.reduce(<<>>, &(&2 <> TxOut.to_binary(&1)))
     |> Hash.sha256_sha256()
   end
 
@@ -223,10 +222,11 @@ defmodule BSV.Sig do
 
   # Replaces the transaction input scripts with the subscript
   defp update_tx_inputs(inputs, vin, subscript, sighash_type)
-    when sighash_anyone_can_pay?(sighash_type)
-  do
-    txin = Enum.at(inputs, vin)
-    |> Map.put(:script, subscript)
+       when sighash_anyone_can_pay?(sighash_type) do
+    txin =
+      Enum.at(inputs, vin)
+      |> Map.put(:script, subscript)
+
     [txin]
   end
 
@@ -246,17 +246,16 @@ defmodule BSV.Sig do
 
   # Prepares the transaction outputs for the legacy preimage algorithm
   defp update_tx_outputs(_outputs, _vin, sighash_type)
-    when sighash_none?(sighash_type),
-    do: []
+       when sighash_none?(sighash_type),
+       do: []
 
   defp update_tx_outputs(outputs, vin, sighash_type)
-    when sighash_single?(sighash_type)
-    and length(outputs) <= vin,
-    do: raise ArgumentError, "input out of txout range"
+       when sighash_single?(sighash_type) and
+              length(outputs) <= vin,
+       do: raise(ArgumentError, "input out of txout range")
 
   defp update_tx_outputs(outputs, vin, sighash_type)
-    when sighash_single?(sighash_type)
-  do
+       when sighash_single?(sighash_type) do
     outputs
     |> Enum.with_index()
     |> Enum.map(fn
@@ -270,5 +269,4 @@ defmodule BSV.Sig do
   end
 
   defp update_tx_outputs(outputs, _vin, _sighash_type), do: outputs
-
 end

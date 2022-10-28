@@ -14,23 +14,26 @@ defmodule BSV.Contract.P2RPHTest do
     test "locks satoshis to an R value" do
       contract = P2RPH.lock(1000, %{r: @r})
       assert %TxOut{satoshis: 1000, script: script} = Contract.to_txout(contract)
-      assert %Script{chunks: [
-        :OP_OVER,
-        :OP_3,
-        :OP_SPLIT,
-        :OP_NIP,
-        :OP_1,
-        :OP_SPLIT,
-        :OP_SWAP,
-        :OP_SPLIT,
-        :OP_DROP,
-        :OP_HASH160,
-        <<_::binary-20>>,
-        :OP_EQUALVERIFY,
-        :OP_TUCK,
-        :OP_CHECKSIGVERIFY,
-        :OP_CHECKSIG
-      ]} = script
+
+      assert %Script{
+               chunks: [
+                 :OP_OVER,
+                 :OP_3,
+                 :OP_SPLIT,
+                 :OP_NIP,
+                 :OP_1,
+                 :OP_SPLIT,
+                 :OP_SWAP,
+                 :OP_SPLIT,
+                 :OP_DROP,
+                 :OP_HASH160,
+                 <<_::binary-20>>,
+                 :OP_EQUALVERIFY,
+                 :OP_TUCK,
+                 :OP_CHECKSIGVERIFY,
+                 :OP_CHECKSIG
+               ]
+             } = script
     end
 
     test "raises an error if the arguments are not valid" do
@@ -43,7 +46,9 @@ defmodule BSV.Contract.P2RPHTest do
   describe "unlock/2" do
     test "unlocks UTXO with given K value" do
       contract = P2RPH.unlock(%UTXO{}, %{k: @k, keypair: @keypair})
-      assert %Script{chunks: [<<_::binary-71>>, <<_::binary-71>>, <<_::binary-33>>]} = Contract.to_script(contract)
+
+      assert %Script{chunks: [<<_::binary-71>>, <<_::binary-71>>, <<_::binary-33>>]} =
+               Contract.to_script(contract)
     end
   end
 
@@ -54,7 +59,9 @@ defmodule BSV.Contract.P2RPHTest do
     end
 
     test "evaluates as invalid if used with with incorrect k" do
-      assert {:error, vm} = Contract.simulate(P2RPH, %{r: @r}, %{k: P2RPH.generate_k(), keypair: KeyPair.new()})
+      assert {:error, vm} =
+               Contract.simulate(P2RPH, %{r: @r}, %{k: P2RPH.generate_k(), keypair: KeyPair.new()})
+
       refute VM.valid?(vm)
     end
   end
@@ -74,5 +81,4 @@ defmodule BSV.Contract.P2RPHTest do
       assert byte_size(r) in [32, 33]
     end
   end
-
 end

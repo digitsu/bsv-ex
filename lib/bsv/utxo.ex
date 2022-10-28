@@ -12,9 +12,9 @@ defmodule BSV.UTXO do
 
   @typedoc "UTXO struct"
   @type t() :: %__MODULE__{
-    outpoint: OutPoint.t(),
-    txout: TxOut.t()
-  }
+          outpoint: OutPoint.t(),
+          txout: TxOut.t()
+        }
 
   @doc """
   Builds a `t:BSV.UTXO.t/0` from the given map of params. Useful for building
@@ -61,9 +61,7 @@ defmodule BSV.UTXO do
     with {:ok, hash} <- decode(txid, :hex),
          {:ok, vout} <- take_any_param(params, ["vout", "outputIndex"]),
          {:ok, satoshis} <- take_any_param(params, ["satoshis", "amount"]),
-         {:ok, script} <- Script.from_binary(script, encoding: :hex)
-
-    do
+         {:ok, script} <- Script.from_binary(script, encoding: :hex) do
       outpoint = struct(OutPoint, hash: reverse_bin(hash), vout: vout)
       txout = struct(TxOut, satoshis: satoshis, script: script)
       {:ok, struct(__MODULE__, outpoint: outpoint, txout: txout)}
@@ -104,9 +102,9 @@ defmodule BSV.UTXO do
     case Map.take(params, keys) |> Map.values() do
       [value | _] ->
         {:ok, value}
+
       _ ->
         {:error, {:param_not_found, keys}}
     end
   end
-
 end

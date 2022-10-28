@@ -2,11 +2,12 @@ defmodule BSV.OutPointTest do
   use ExUnit.Case, async: true
   alias BSV.OutPoint
 
-  @outpoint_bin <<94, 27, 177, 168, 195, 168, 13, 203, 237, 27, 8, 189, 85, 231,
-    30, 76, 58, 78, 0, 69, 187, 162, 218, 189, 139, 22, 16, 62, 255, 43, 176, 98, 2, 0, 0, 0>>
+  @outpoint_bin <<94, 27, 177, 168, 195, 168, 13, 203, 237, 27, 8, 189, 85, 231, 30, 76, 58, 78,
+                  0, 69, 187, 162, 218, 189, 139, 22, 16, 62, 255, 43, 176, 98, 2, 0, 0, 0>>
   @outpoint %OutPoint{
-    hash: <<94, 27, 177, 168, 195, 168, 13, 203, 237, 27, 8, 189, 85, 231,
-      30, 76, 58, 78, 0, 69, 187, 162, 218, 189, 139, 22, 16, 62, 255, 43, 176, 98>>,
+    hash:
+      <<94, 27, 177, 168, 195, 168, 13, 203, 237, 27, 8, 189, 85, 231, 30, 76, 58, 78, 0, 69, 187,
+        162, 218, 189, 139, 22, 16, 62, 255, 43, 176, 98>>,
     vout: 2
   }
   @null_outpoint %OutPoint{
@@ -47,8 +48,9 @@ defmodule BSV.OutPointTest do
     test "serialises the outpoint" do
       assert OutPoint.to_binary(@outpoint) == @outpoint_bin
       outpoint_hex = OutPoint.to_binary(@null_outpoint, encoding: :hex)
-      assert outpoint_hex == "0000000000000000000000000000000000000000000000000000000000000000ffffffff"
+
+      assert outpoint_hex ==
+               "0000000000000000000000000000000000000000000000000000000000000000ffffffff"
     end
   end
-
 end

@@ -36,10 +36,19 @@ defmodule BSV.Contract.PushTxHelpers do
   use Contract.Helpers
 
   @order_prefix Base.decode16!("414136d08c5ed2bf3ba048afe6dcaebafe", case: :mixed)
-  @pubkey_a Base.decode16!("023635954789a02e39fb7e54440b6f528d53efd65635ddad7f3c4085f97fdbdc48", case: :mixed)
-  @pubkey_b Base.decode16!("038ff83d8cf12121491609c4939dc11c4aa35503508fe432dc5a5c1905608b9218", case: :mixed)
-  @pubkey_opt Base.decode16!("02b405d7f0322a89d0f9f3a98e6f938fdc1c969a8d1382a2bf66a71ae74a1e83b0", case: :mixed)
-  @sig_prefix Base.decode16!("3044022079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f817980220", case: :mixed)
+  @pubkey_a Base.decode16!("023635954789a02e39fb7e54440b6f528d53efd65635ddad7f3c4085f97fdbdc48",
+              case: :mixed
+            )
+  @pubkey_b Base.decode16!("038ff83d8cf12121491609c4939dc11c4aa35503508fe432dc5a5c1905608b9218",
+              case: :mixed
+            )
+  @pubkey_opt Base.decode16!("02b405d7f0322a89d0f9f3a98e6f938fdc1c969a8d1382a2bf66a71ae74a1e83b0",
+                case: :mixed
+              )
+  @sig_prefix Base.decode16!(
+                "3044022079be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f817980220",
+                case: :mixed
+              )
   @sighash_flag 0x41
 
   @doc """
@@ -214,7 +223,7 @@ defmodule BSV.Contract.PushTxHelpers do
   @spec check_tx!(Contract.t()) :: Contract.t()
   def check_tx!(%Contract{} = contract) do
     contract = check_tx(contract)
-    update_in(contract.script.chunks, & List.replace_at(&1, -1, :OP_CHECKSIGVERIFY))
+    update_in(contract.script.chunks, &List.replace_at(&1, -1, :OP_CHECKSIGVERIFY))
   end
 
   # Prepares the sighash and MSB
@@ -318,7 +327,7 @@ defmodule BSV.Contract.PushTxHelpers do
   @spec check_tx_opt!(Contract.t()) :: Contract.t()
   def check_tx_opt!(%Contract{} = contract) do
     contract = check_tx_opt(contract)
-    update_in(contract.script.chunks, & List.replace_at(&1, -1, :OP_CHECKSIGVERIFY))
+    update_in(contract.script.chunks, &List.replace_at(&1, -1, :OP_CHECKSIGVERIFY))
   end
 
   # Adds 1 to the sighash MSB
@@ -342,5 +351,4 @@ defmodule BSV.Contract.PushTxHelpers do
     |> push(@sighash_flag)
     |> op_cat()
   end
-
 end

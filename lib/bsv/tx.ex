@@ -19,11 +19,11 @@ defmodule BSV.Tx do
 
   @typedoc "Tx struct"
   @type t() :: %__MODULE__{
-    version: non_neg_integer(),
-    inputs: list(TxIn.t()),
-    outputs: list(TxOut.t()),
-    lock_time: non_neg_integer()
-  }
+          version: non_neg_integer(),
+          inputs: list(TxIn.t()),
+          outputs: list(TxOut.t()),
+          lock_time: non_neg_integer()
+        }
 
   @typedoc """
   Tx hash
@@ -44,14 +44,14 @@ defmodule BSV.Tx do
   """
   @spec add_input(t(), TxIn.t()) :: t()
   def add_input(%__MODULE__{} = tx, %TxIn{} = txin),
-    do: update_in(tx.inputs, & &1 ++ [txin])
+    do: update_in(tx.inputs, &(&1 ++ [txin]))
 
   @doc """
   Adds the given `t:BSV.TxOut.t/0` to the transaction.
   """
   @spec add_output(t(), TxOut.t()) :: t()
   def add_output(%__MODULE__{} = tx, %TxOut{} = txout),
-    do: update_in(tx.outputs, & &1 ++ [txout])
+    do: update_in(tx.outputs, &(&1 ++ [txout]))
 
   @doc """
   Returns true if the given `t:BSV.Tx.t/0` is a coinbase transaction (the first
@@ -79,8 +79,7 @@ defmodule BSV.Tx do
     encoding = Keyword.get(opts, :encoding)
 
     with {:ok, data} <- decode(data, encoding),
-         {:ok, tx, _rest} <- Serializable.parse(%__MODULE__{}, data)
-    do
+         {:ok, tx, _rest} <- Serializable.parse(%__MODULE__{}, data) do
       {:ok, tx}
     end
   end
@@ -153,25 +152,28 @@ defmodule BSV.Tx do
       with <<version::little-32, data::binary>> <- data,
            {:ok, inputs, data} <- VarInt.parse_items(data, TxIn),
            {:ok, outputs, data} <- VarInt.parse_items(data, TxOut),
-           <<lock_time::little-32, rest::binary>> = data
-      do
-        {:ok, struct(tx, [
-          version: version,
-          inputs: inputs,
-          outputs: outputs,
-          lock_time: lock_time
-        ]), rest}
+           <<lock_time::little-32, rest::binary>> = data do
+        {:ok,
+         struct(tx,
+           version: version,
+           inputs: inputs,
+           outputs: outputs,
+           lock_time: lock_time
+         ), rest}
       end
     end
 
     @impl true
     def serialize(%{version: version, inputs: inputs, outputs: outputs, lock_time: lock_time}) do
-      inputs_data = Enum.reduce(inputs, VarInt.encode(length(inputs)), fn input, data ->
-        data <> Serializable.serialize(input)
-      end)
-      outputs_data = Enum.reduce(outputs, VarInt.encode(length(outputs)), fn output, data ->
-        data <> Serializable.serialize(output)
-      end)
+      inputs_data =
+        Enum.reduce(inputs, VarInt.encode(length(inputs)), fn input, data ->
+          data <> Serializable.serialize(input)
+        end)
+
+      outputs_data =
+        Enum.reduce(outputs, VarInt.encode(length(outputs)), fn output, data ->
+          data <> Serializable.serialize(output)
+        end)
 
       <<
         version::little-32,
@@ -181,5 +183,4 @@ defmodule BSV.Tx do
       >>
     end
   end
-
 end

@@ -40,37 +40,44 @@ defmodule BSV.Message do
   * `:encoding` - Optionally decode the binary with either the `:base64` or `:hex` encoding scheme.
   """
   @spec decrypt(binary(), PrivKey.t(), keyword()) ::
-    {:ok, binary()} |
-    {:error, term()}
+          {:ok, binary()}
+          | {:error, term()}
   def decrypt(data, %PrivKey{} = privkey, opts \\ []) do
     encoding = Keyword.get(opts, :encoding)
     encrypted = decode!(data, encoding)
     len = byte_size(encrypted) - 69
 
     <<
-      "BIE1",                         # magic bytes
-      ephemeral_pubkey::binary-33,    # ephermeral pubkey
-      ciphertext::binary-size(len),   # ciphertext
-      mac::binary-32                  # mac hash
+      # magic bytes
+      "BIE1",
+      # ephermeral pubkey
+      ephemeral_pubkey::binary-33,
+      # ciphertext
+      ciphertext::binary-size(len),
+      # mac hash
+      mac::binary-32
     >> = encrypted
 
     <<d::big-256>> = privkey.d
 
     # Derive ECDH key and sha512 hash
-    ecdh_point = ephemeral_pubkey
-    |> PubKey.from_binary!()
-    |> Map.get(:point)
-    |> Curvy.Point.mul(d)
-    key_hash = %PubKey{point: ecdh_point}
-    |> PubKey.to_binary()
-    |> Hash.sha512()
+    ecdh_point =
+      ephemeral_pubkey
+      |> PubKey.from_binary!()
+      |> Map.get(:point)
+      |> Curvy.Point.mul(d)
+
+    key_hash =
+      %PubKey{point: ecdh_point}
+      |> PubKey.to_binary()
+      |> Hash.sha512()
 
     # iv and enc_key used in AES, mac_key used in HMAC
     <<iv::binary-16, enc_key::binary-16, mac_key::binary-32>> = key_hash
 
     with ^mac <- Hash.sha256_hmac("BIE1" <> ephemeral_pubkey <> ciphertext, mac_key),
-         msg when is_binary(msg) <- :crypto.crypto_one_time(:aes_128_cbc, enc_key, iv, ciphertext, false)
-    do
+         msg when is_binary(msg) <-
+           :crypto.crypto_one_time(:aes_128_cbc, enc_key, iv, ciphertext, false) do
       {:ok, pkcs7_unpad(msg)}
     end
   end
@@ -93,11 +100,14 @@ defmodule BSV.Message do
     <<d::big-256>> = ephemeral_key.privkey.d
 
     # Derive ECDH key and sha512 hash
-    ecdh_point = pubkey.point
-    |> Curvy.Point.mul(d)
-    key_hash = %PubKey{point: ecdh_point}
-    |> PubKey.to_binary()
-    |> Hash.sha512()
+    ecdh_point =
+      pubkey.point
+      |> Curvy.Point.mul(d)
+
+    key_hash =
+      %PubKey{point: ecdh_point}
+      |> PubKey.to_binary()
+      |> Hash.sha512()
 
     # iv and enc_key used in AES, mac_key used in HMAC
     <<iv::binary-16, enc_key::binary-16, mac_key::binary-32>> = key_hash
@@ -121,13 +131,14 @@ defmodule BSV.Message do
   """
   @spec sign(binary(), PrivKey.t(), keyword()) :: binary()
   def sign(message, %PrivKey{} = privkey, opts \\ []) do
-    opts = opts
-    |> Keyword.put_new(:encoding, :base64)
-    |> Keyword.merge([
-      compact: true,
-      compressed: privkey.compressed,
-      hash: false
-    ])
+    opts =
+      opts
+      |> Keyword.put_new(:encoding, :base64)
+      |> Keyword.merge(
+        compact: true,
+        compressed: privkey.compressed,
+        hash: false
+      )
 
     message
     |> bsm_digest()
@@ -147,8 +158,8 @@ defmodule BSV.Message do
   * `:encoding` - Decode the signature with either the `:base64`, `:hex` or `:raw` encoding scheme.
   """
   @spec verify(binary(), binary(), PubKey.t() | Address.t(), keyword()) ::
-    boolean() |
-    {:error, term()}
+          boolean()
+          | {:error, term()}
   def verify(signature, message, pubkey_or_address, opts \\ []) do
     encoding = Keyword.get(opts, :encoding, :base64)
 
@@ -164,8 +175,7 @@ defmodule BSV.Message do
   # Handles signature verification with address or pubkey
   def do_verify(sig, message, %Address{} = address) do
     with %Curvy.Key{} = key <- Curvy.recover_key(sig, message, hash: false),
-         ^address <- Address.from_pubkey(%PubKey{point: key.point})
-    do
+         ^address <- Address.from_pubkey(%PubKey{point: key.point}) do
       Curvy.verify(sig, message, key, hash: false)
     end
   end
@@ -186,7 +196,9 @@ defmodule BSV.Message do
   # Pads the message using PKCS7
   defp pkcs7_pad(msg) do
     case rem(byte_size(msg), 16) do
-      0 -> msg
+      0 ->
+        msg
+
       pad ->
         pad = 16 - pad
         msg <> :binary.copy(<<pad>>, pad)
@@ -198,9 +210,9 @@ defmodule BSV.Message do
     case :binary.last(msg) do
       pad when 0 < pad and pad < 16 ->
         :binary.part(msg, 0, byte_size(msg) - pad)
+
       _ ->
         msg
     end
   end
-
 end

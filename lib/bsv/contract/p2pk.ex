@@ -42,5 +42,4 @@ defmodule BSV.Contract.P2PK do
   def unlocking_script(ctx, %{privkey: %PrivKey{} = privkey}) do
     sig(ctx, privkey)
   end
-
 end

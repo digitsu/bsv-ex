@@ -17,9 +17,9 @@ defmodule BSV.TxOut do
 
   @typedoc "TxOut struct"
   @type t() :: %__MODULE__{
-    satoshis: non_neg_integer(),
-    script: Script.t()
-  }
+          satoshis: non_neg_integer(),
+          script: Script.t()
+        }
 
   @typedoc """
   Vout - Vector of an output in a Bitcoin transaction
@@ -44,8 +44,7 @@ defmodule BSV.TxOut do
     encoding = Keyword.get(opts, :encoding)
 
     with {:ok, data} <- decode(data, encoding),
-         {:ok, txout, _rest} <- Serializable.parse(%__MODULE__{}, data)
-    do
+         {:ok, txout, _rest} <- Serializable.parse(%__MODULE__{}, data) do
       {:ok, txout}
     end
   end
@@ -91,26 +90,26 @@ defmodule BSV.TxOut do
     |> encode(encoding)
   end
 
-
   defimpl Serializable do
     @impl true
     def parse(txout, data) do
       with <<satoshis::little-64, data::binary>> <- data,
            {:ok, script, rest} <- VarInt.parse_data(data),
-           {:ok, script} <- Script.from_binary(script)
-      do
-        {:ok, struct(txout, [
-          satoshis: satoshis,
-          script: script
-        ]), rest}
+           {:ok, script} <- Script.from_binary(script) do
+        {:ok,
+         struct(txout,
+           satoshis: satoshis,
+           script: script
+         ), rest}
       end
     end
 
     @impl true
     def serialize(%{satoshis: satoshis, script: script}) do
-      script_data = script
-      |> Script.to_binary()
-      |> VarInt.encode_binary()
+      script_data =
+        script
+        |> Script.to_binary()
+        |> VarInt.encode_binary()
 
       <<
         satoshis::little-64,

@@ -12,9 +12,9 @@ defmodule BSV.PrivKey do
 
   @typedoc "Private key struct"
   @type t() :: %__MODULE__{
-    d: privkey_bin(),
-    compressed: boolean()
-  }
+          d: privkey_bin(),
+          compressed: boolean()
+        }
 
   @typedoc "Private key 256-bit binary"
   @type privkey_bin() :: <<_::256>>
@@ -74,8 +74,10 @@ defmodule BSV.PrivKey do
     case decode(privkey, encoding) do
       {:ok, <<d::binary-32>>} ->
         {:ok, struct(__MODULE__, d: d, compressed: compressed)}
+
       {:ok, d} ->
         {:error, {:invalid_privkey, byte_size(d)}}
+
       {:error, error} ->
         {:error, error}
     end
@@ -91,6 +93,7 @@ defmodule BSV.PrivKey do
     case from_binary(privkey, opts) do
       {:ok, privkey} ->
         privkey
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
@@ -119,7 +122,7 @@ defmodule BSV.PrivKey do
       {:ok, {<<d::binary-32>>, ^version_byte}} ->
         {:ok, struct(__MODULE__, d: d, compressed: false)}
 
-      {:ok, {<<d::binary>>, version_byte}} when byte_size(d) in [32,33] ->
+      {:ok, {<<d::binary>>, version_byte}} when byte_size(d) in [32, 33] ->
         {:error, {:invalid_base58_check, version_byte, BSV.network()}}
 
       _error ->
@@ -137,6 +140,7 @@ defmodule BSV.PrivKey do
     case from_wif(wif) do
       {:ok, privkey} ->
         privkey
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
@@ -173,12 +177,13 @@ defmodule BSV.PrivKey do
   @spec to_wif(t()) :: privkey_wif()
   def to_wif(%__MODULE__{d: d, compressed: compressed}) do
     version_byte = @version_bytes[BSV.network()]
-    privkey_with_suffix = case compressed do
-      true -> <<d::binary, 0x01>>
-      false -> d
-    end
+
+    privkey_with_suffix =
+      case compressed do
+        true -> <<d::binary, 0x01>>
+        false -> d
+      end
 
     B58.encode58_check!(privkey_with_suffix, version_byte)
   end
-
 end

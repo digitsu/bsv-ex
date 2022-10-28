@@ -5,5 +5,4 @@ defmodule BSV.ContractTest do
   doctest Contract
 
   # TODO more tests needed
-
 end

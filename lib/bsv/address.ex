@@ -19,8 +19,8 @@ defmodule BSV.Address do
   An Elixir struct containing the public key hash.
   """
   @type t() :: %__MODULE__{
-    pubkey_hash: <<_::160>>
-  }
+          pubkey_hash: <<_::160>>
+        }
 
   @typedoc """
   Bitcoin address string
@@ -52,8 +52,7 @@ defmodule BSV.Address do
   end
 
   def from_pubkey(pubkey)
-    when is_binary(pubkey) and byte_size(pubkey) in [33, 65]
-  do
+      when is_binary(pubkey) and byte_size(pubkey) in [33, 65] do
     pubkey_hash = Hash.sha256_ripemd160(pubkey)
     struct(__MODULE__, pubkey_hash: pubkey_hash)
   end
@@ -73,6 +72,7 @@ defmodule BSV.Address do
   @spec from_string(address_str()) :: {:ok, t()} | {:error, term()}
   def from_string(address) when is_binary(address) do
     version_byte = @version_bytes[BSV.network()]
+
     case B58.decode58_check(address) do
       {:ok, {<<pubkey_hash::binary-20>>, ^version_byte}} ->
         {:ok, struct(__MODULE__, pubkey_hash: pubkey_hash)}
@@ -95,6 +95,7 @@ defmodule BSV.Address do
     case from_string(address) do
       {:ok, privkey} ->
         privkey
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
@@ -114,5 +115,4 @@ defmodule BSV.Address do
     version_byte = @version_bytes[BSV.network()]
     B58.encode58_check!(pubkey_hash, version_byte)
   end
-
 end

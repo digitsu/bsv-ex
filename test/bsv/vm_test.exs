@@ -37,7 +37,9 @@ defmodule BSV.VMTest do
     end
 
     test "handles nested OP_IF blocks", %{vm: vm} do
-      {:ok, vm} = VM.eval(vm, [:OP_1, :OP_IF, "foo", :OP_IF, "qux", :OP_ENDIF, :OP_ELSE, "bar", :OP_ENDIF])
+      {:ok, vm} =
+        VM.eval(vm, [:OP_1, :OP_IF, "foo", :OP_IF, "qux", :OP_ENDIF, :OP_ELSE, "bar", :OP_ENDIF])
+
       assert vm.stack == ["qux"]
     end
 
@@ -175,12 +177,12 @@ defmodule BSV.VMTest do
     end
 
     test "OP_NUM2BIN converts numeric value into bytes", %{vm: vm} do
-      {:ok, vm} = VM.eval(vm, [67305985, :OP_10, :OP_NUM2BIN])
+      {:ok, vm} = VM.eval(vm, [67_305_985, :OP_10, :OP_NUM2BIN])
       assert vm.stack == [<<1, 2, 3, 4, 0, 0, 0, 0, 0, 0>>]
     end
 
     test "OP_NUM2BIN converts neg numeric value into bytes", %{vm: vm} do
-      {:ok, vm} = VM.eval(vm, [-67305985, :OP_10, :OP_NUM2BIN])
+      {:ok, vm} = VM.eval(vm, [-67_305_985, :OP_10, :OP_NUM2BIN])
       assert vm.stack == [<<1, 2, 3, 4, 0, 0, 0, 0, 0, 128>>]
     end
 
@@ -290,18 +292,34 @@ defmodule BSV.VMTest do
       assert ScriptNum.decode(val) == 1
     end
 
-    test "OP_LSHIFT bitshifts the 2nd stack items to the left by the top stack item number", %{vm: vm} do
+    test "OP_LSHIFT bitshifts the 2nd stack items to the left by the top stack item number", %{
+      vm: vm
+    } do
       assert {:ok, %VM{stack: [<<0, 1, 0>>]}} = VM.eval(vm, [<<0, 0, 128>>, :OP_1, :OP_LSHIFT])
-      assert {:ok, %VM{stack: [<<255, 255, 252>>]}} = VM.eval(vm, [<<255, 255, 255>>, :OP_2, :OP_LSHIFT])
-      assert {:ok, %VM{stack: [<<255, 240, 0>>]}} = VM.eval(vm, [<<255, 255, 255>>, :OP_12, :OP_LSHIFT])
-      assert {:ok, %VM{stack: [<<81, 137, 201, 107, 249, 217, 31, 72>>]}} = VM.eval(vm, [<<84, 98, 114, 90, 254, 118, 71, 210>>, :OP_2, :OP_LSHIFT])
+
+      assert {:ok, %VM{stack: [<<255, 255, 252>>]}} =
+               VM.eval(vm, [<<255, 255, 255>>, :OP_2, :OP_LSHIFT])
+
+      assert {:ok, %VM{stack: [<<255, 240, 0>>]}} =
+               VM.eval(vm, [<<255, 255, 255>>, :OP_12, :OP_LSHIFT])
+
+      assert {:ok, %VM{stack: [<<81, 137, 201, 107, 249, 217, 31, 72>>]}} =
+               VM.eval(vm, [<<84, 98, 114, 90, 254, 118, 71, 210>>, :OP_2, :OP_LSHIFT])
     end
 
-    test "OP_RSHIFT bitshifts the 2nd stack items to the right by the top stack item number", %{vm: vm} do
+    test "OP_RSHIFT bitshifts the 2nd stack items to the right by the top stack item number", %{
+      vm: vm
+    } do
       assert {:ok, %VM{stack: [<<0, 128, 0>>]}} = VM.eval(vm, [<<1, 0, 0>>, :OP_1, :OP_RSHIFT])
-      assert {:ok, %VM{stack: [<<63, 255, 255>>]}} = VM.eval(vm, [<<255, 255, 255>>, :OP_2, :OP_RSHIFT])
-      assert {:ok, %VM{stack: [<<0, 15, 255>>]}} = VM.eval(vm, [<<255, 255, 255>>, :OP_12, :OP_RSHIFT])
-      assert {:ok, %VM{stack: [<<21, 24, 156, 150, 191, 157, 145, 244>>]}} = VM.eval(vm, [<<84, 98, 114, 90, 254, 118, 71, 210>>, :OP_2, :OP_RSHIFT])
+
+      assert {:ok, %VM{stack: [<<63, 255, 255>>]}} =
+               VM.eval(vm, [<<255, 255, 255>>, :OP_2, :OP_RSHIFT])
+
+      assert {:ok, %VM{stack: [<<0, 15, 255>>]}} =
+               VM.eval(vm, [<<255, 255, 255>>, :OP_12, :OP_RSHIFT])
+
+      assert {:ok, %VM{stack: [<<21, 24, 156, 150, 191, 157, 145, 244>>]}} =
+               VM.eval(vm, [<<84, 98, 114, 90, 254, 118, 71, 210>>, :OP_2, :OP_RSHIFT])
     end
 
     test "OP_BOOLAND checks boolean positivity of both of top two stack items", %{vm: vm} do
@@ -323,7 +341,9 @@ defmodule BSV.VMTest do
 
     test "OP_NUMEQUALVERIFY as OP_NUMEQUAL but halts if not truthy stack", %{vm: vm} do
       assert {:ok, %VM{stack: [<<10>>]}} = VM.eval(vm, [:OP_1, :OP_1, :OP_NUMEQUALVERIFY, :OP_10])
-      assert {:error, %VM{stack: [<<>>]}} = VM.eval(vm, [:OP_0, :OP_1, :OP_NUMEQUALVERIFY, :OP_10])
+
+      assert {:error, %VM{stack: [<<>>]}} =
+               VM.eval(vm, [:OP_0, :OP_1, :OP_NUMEQUALVERIFY, :OP_10])
     end
 
     test "OP_NUMNOTEQUAL check top two stack items are not numerically equal", %{vm: vm} do
@@ -343,13 +363,16 @@ defmodule BSV.VMTest do
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [:OP_2, :OP_1, :OP_GREATERTHAN])
     end
 
-    test "OP_LESSTHANOREQUAL checks if the second stack item is less than or equal to the top", %{vm: vm} do
+    test "OP_LESSTHANOREQUAL checks if the second stack item is less than or equal to the top", %{
+      vm: vm
+    } do
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [:OP_2, :OP_2, :OP_LESSTHANOREQUAL])
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [:OP_1, :OP_2, :OP_LESSTHANOREQUAL])
       assert {:ok, %VM{stack: [<<>>]}} = VM.eval(vm, [:OP_2, :OP_1, :OP_LESSTHANOREQUAL])
     end
 
-    test "OP_GREATERTHANOREQUAL checks if the second stack item is greater than or equal to the top", %{vm: vm} do
+    test "OP_GREATERTHANOREQUAL checks if the second stack item is greater than or equal to the top",
+         %{vm: vm} do
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [:OP_2, :OP_2, :OP_GREATERTHANOREQUAL])
       assert {:ok, %VM{stack: [<<>>]}} = VM.eval(vm, [:OP_1, :OP_2, :OP_GREATERTHANOREQUAL])
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [:OP_2, :OP_1, :OP_GREATERTHANOREQUAL])
@@ -363,7 +386,9 @@ defmodule BSV.VMTest do
       assert {:ok, %VM{stack: [<<2>>]}} = VM.eval(vm, [:OP_1, :OP_2, :OP_MAX])
     end
 
-    test "OP_WITHIN checks if the 3rd stack item is within the range defined by 2nd and top", %{vm: vm} do
+    test "OP_WITHIN checks if the 3rd stack item is within the range defined by 2nd and top", %{
+      vm: vm
+    } do
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [:OP_1, :OP_1, :OP_5, :OP_WITHIN])
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [:OP_3, :OP_1, :OP_5, :OP_WITHIN])
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [:OP_5, :OP_1, :OP_5, :OP_WITHIN])
@@ -374,30 +399,44 @@ defmodule BSV.VMTest do
   describe "7a. Crypto operations" do
     test "OP_RIPEMD160 hashes the top stack item", %{vm: vm} do
       assert {:ok, %VM{stack: [top]}} = VM.eval(vm, ["foo", :OP_RIPEMD160])
-      assert top == <<66, 207, 162, 17, 1, 142, 164, 146, 253, 238, 69, 172, 99, 123, 121, 114, 160, 173, 104, 115>>
+
+      assert top ==
+               <<66, 207, 162, 17, 1, 142, 164, 146, 253, 238, 69, 172, 99, 123, 121, 114, 160,
+                 173, 104, 115>>
     end
 
     test "OP_SHA1 hashes the top stack item", %{vm: vm} do
       assert {:ok, %VM{stack: [top]}} = VM.eval(vm, ["foo", :OP_SHA1])
-      assert top == <<11, 238, 199, 181, 234, 63, 15, 219, 201, 93, 13, 212, 127, 60, 91, 194, 117, 218, 138, 51>>
+
+      assert top ==
+               <<11, 238, 199, 181, 234, 63, 15, 219, 201, 93, 13, 212, 127, 60, 91, 194, 117,
+                 218, 138, 51>>
     end
 
     test "OP_SHA256 hashes the top stack item", %{vm: vm} do
       assert {:ok, %VM{stack: [top]}} = VM.eval(vm, ["foo", :OP_SHA256])
-      assert top == <<44, 38, 180, 107, 104, 255, 198, 143, 249, 155, 69, 60, 29, 48, 65, 52, 19, 66, 45, 112, 100, 131, 191, 160, 249, 138, 94, 136, 98, 102, 231, 174>>
+
+      assert top ==
+               <<44, 38, 180, 107, 104, 255, 198, 143, 249, 155, 69, 60, 29, 48, 65, 52, 19, 66,
+                 45, 112, 100, 131, 191, 160, 249, 138, 94, 136, 98, 102, 231, 174>>
     end
 
     test "OP_HASH160 hashes the top stack item", %{vm: vm} do
       assert {:ok, %VM{stack: [top]}} = VM.eval(vm, ["foo", :OP_HASH160])
-      assert top == <<225, 207, 124, 129, 3, 71, 107, 109, 127, 233, 228, 151, 154, 161, 14, 124, 83, 31, 207, 66>>
+
+      assert top ==
+               <<225, 207, 124, 129, 3, 71, 107, 109, 127, 233, 228, 151, 154, 161, 14, 124, 83,
+                 31, 207, 66>>
     end
 
     test "OP_HASH256 hashes the top stack item", %{vm: vm} do
       assert {:ok, %VM{stack: [top]}} = VM.eval(vm, ["foo", :OP_HASH256])
-      assert top == <<199, 173, 232, 143, 199, 162, 20, 152, 166, 165, 229, 195, 133, 225, 246, 139, 237, 130, 43, 114, 170, 99, 196, 169, 164, 138, 2, 194, 70, 110, 226, 158>>
+
+      assert top ==
+               <<199, 173, 232, 143, 199, 162, 20, 152, 166, 165, 229, 195, 133, 225, 246, 139,
+                 237, 130, 43, 114, 170, 99, 196, 169, 164, 138, 2, 194, 70, 110, 226, 158>>
     end
   end
-
 
   alias BSV.{Address, KeyPair, OutPoint, PrivKey, PubKey, Sig, Tx, TxBuilder, UTXO}
   alias BSV.Contract.P2PKH
@@ -408,18 +447,20 @@ defmodule BSV.VMTest do
 
   describe "OP_CHECKSIG" do
     setup %{vm: vm} do
-      prev_tx = TxBuilder.to_tx(%TxBuilder{
-        outputs: [P2PKH.lock(50000, %{address: @test_address})]
-      })
+      prev_tx =
+        TxBuilder.to_tx(%TxBuilder{
+          outputs: [P2PKH.lock(50000, %{address: @test_address})]
+        })
 
       utxo = %UTXO{
         outpoint: %OutPoint{hash: Tx.get_hash(prev_tx), vout: 0},
         txout: List.first(prev_tx.outputs)
       }
 
-      tx = TxBuilder.to_tx(%TxBuilder{
-        inputs: [P2PKH.unlock(utxo, %{keypair: @test_keypair})]
-      })
+      tx =
+        TxBuilder.to_tx(%TxBuilder{
+          inputs: [P2PKH.unlock(utxo, %{keypair: @test_keypair})]
+        })
 
       %{
         sig: Sig.sign(tx, 0, utxo.txout, @test_keypair.privkey),
@@ -428,18 +469,25 @@ defmodule BSV.VMTest do
     end
 
     test "OP_CHECKSIG verifies the signature using the public key", %{sig: sig, vm: vm} do
-      assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, [sig, PubKey.to_binary(@test_keypair.pubkey), :OP_CHECKSIG])
+      assert {:ok, %VM{stack: [<<1>>]}} =
+               VM.eval(vm, [sig, PubKey.to_binary(@test_keypair.pubkey), :OP_CHECKSIG])
     end
 
     test "OP_CHECKSIG returns false if signature invalid", %{sig: sig, vm: vm} do
       keypair = KeyPair.new()
-      assert {:ok, %VM{stack: [<<>>]}} = VM.eval(vm, [sig, PubKey.to_binary(keypair.pubkey), :OP_CHECKSIG])
+
+      assert {:ok, %VM{stack: [<<>>]}} =
+               VM.eval(vm, [sig, PubKey.to_binary(keypair.pubkey), :OP_CHECKSIG])
     end
 
     test "OP_CHECKSIGVERIFY as OP_CHECKSIG but halts if not truthy stack", %{sig: sig, vm: vm} do
-      assert {:ok, %VM{stack: []}} = VM.eval(vm, [sig, PubKey.to_binary(@test_keypair.pubkey), :OP_CHECKSIGVERIFY])
+      assert {:ok, %VM{stack: []}} =
+               VM.eval(vm, [sig, PubKey.to_binary(@test_keypair.pubkey), :OP_CHECKSIGVERIFY])
+
       keypair = KeyPair.new()
-      assert {:error, %VM{stack: [<<>>]}} = VM.eval(vm, [sig, PubKey.to_binary(keypair.pubkey), :OP_CHECKSIGVERIFY])
+
+      assert {:error, %VM{stack: [<<>>]}} =
+               VM.eval(vm, [sig, PubKey.to_binary(keypair.pubkey), :OP_CHECKSIGVERIFY])
     end
   end
 
@@ -447,56 +495,77 @@ defmodule BSV.VMTest do
     setup %{vm: vm} do
       keys = Enum.map(1..3, fn _i -> KeyPair.new() end)
 
-      prev_tx = TxBuilder.to_tx(%TxBuilder{
-        outputs: [P2PKH.lock(50000, %{address: @test_address})]
-      })
+      prev_tx =
+        TxBuilder.to_tx(%TxBuilder{
+          outputs: [P2PKH.lock(50000, %{address: @test_address})]
+        })
 
       utxo = %UTXO{
         outpoint: %OutPoint{hash: Tx.get_hash(prev_tx), vout: 0},
         txout: List.first(prev_tx.outputs)
       }
 
-      tx = TxBuilder.to_tx(%TxBuilder{
-        inputs: [P2PKH.unlock(utxo, %{keypair: @test_keypair})]
-      })
+      tx =
+        TxBuilder.to_tx(%TxBuilder{
+          inputs: [P2PKH.unlock(utxo, %{keypair: @test_keypair})]
+        })
 
       sigs = Enum.map(keys, fn k -> Sig.sign(tx, 0, utxo.txout, k.privkey) end)
 
       %{
-        keys: Enum.map(keys, & PubKey.to_binary(&1.pubkey)),
+        keys: Enum.map(keys, &PubKey.to_binary(&1.pubkey)),
         sigs: sigs,
         vm: Map.merge(vm, %{ctx: {tx, 0, utxo.txout}})
       }
     end
 
-    test "OP_CHECKMULTISIG verifies all of the signatures using all the public keys", %{keys: keys, sigs: sigs, vm: vm} do
+    test "OP_CHECKMULTISIG verifies all of the signatures using all the public keys", %{
+      keys: keys,
+      sigs: sigs,
+      vm: vm
+    } do
       script = [:OP_0 | sigs] ++ [:OP_3 | keys] ++ [:OP_3, :OP_CHECKMULTISIG]
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, script)
     end
 
-    test "OP_CHECKMULTISIG verifies all of the signatures using 2/3 the public keys", %{keys: keys, sigs: sigs, vm: vm} do
+    test "OP_CHECKMULTISIG verifies all of the signatures using 2/3 the public keys", %{
+      keys: keys,
+      sigs: sigs,
+      vm: vm
+    } do
       [_skip | sigs] = sigs
       script = [:OP_0 | sigs] ++ [:OP_2 | keys] ++ [:OP_3, :OP_CHECKMULTISIG]
       assert {:ok, %VM{stack: [<<1>>]}} = VM.eval(vm, script)
     end
 
-    test "OP_CHECKMULTISIG returns false if sigs in wrong order", %{keys: keys, sigs: sigs, vm: vm} do
+    test "OP_CHECKMULTISIG returns false if sigs in wrong order", %{
+      keys: keys,
+      sigs: sigs,
+      vm: vm
+    } do
       [_skip | sigs] = sigs
       script = [:OP_0 | Enum.reverse(sigs)] ++ [:OP_2 | keys] ++ [:OP_3, :OP_CHECKMULTISIG]
       assert {:ok, %VM{stack: [<<>>]}} = VM.eval(vm, script)
     end
 
-    test "OP_CHECKMULTISIG returns false if junk value doesn't exist", %{keys: keys, sigs: sigs, vm: vm} do
+    test "OP_CHECKMULTISIG returns false if junk value doesn't exist", %{
+      keys: keys,
+      sigs: sigs,
+      vm: vm
+    } do
       script = sigs ++ [:OP_3 | keys] ++ [:OP_3, :OP_CHECKMULTISIG]
       assert {:ok, %VM{stack: [<<>>]}} = VM.eval(vm, script)
     end
 
-    test "OP_CHECKMULTISIGVERIFY as OP_CHECKMULTISIG but halts if not truthy stack", %{keys: keys, sigs: sigs, vm: vm} do
+    test "OP_CHECKMULTISIGVERIFY as OP_CHECKMULTISIG but halts if not truthy stack", %{
+      keys: keys,
+      sigs: sigs,
+      vm: vm
+    } do
       script = [:OP_0 | sigs] ++ [:OP_3 | keys] ++ [:OP_3, :OP_CHECKMULTISIGVERIFY]
       assert {:ok, %VM{stack: []}} = VM.eval(vm, script)
       script = [:OP_0 | Enum.reverse(sigs)] ++ [:OP_3 | keys] ++ [:OP_3, :OP_CHECKMULTISIGVERIFY]
       assert {:error, %VM{stack: [<<>>]}} = VM.eval(vm, script)
     end
   end
-
 end

@@ -22,5 +22,4 @@ defmodule BSV.ScriptNumTest do
       assert BSV.ScriptNum.encode(-1) == <<0x81>>
     end
   end
-
 end

@@ -6,12 +6,14 @@ defmodule BSV.Contract.VarIntHelpersTest do
   describe "get_varint/3" do
     test "gets the varint from the top stack element and places on top" do
       Enum.each([32, 320, 320_000], fn bytes ->
-        data = :crypto.strong_rand_bytes(bytes)
-        |> VarInt.encode_binary()
+        data =
+          :crypto.strong_rand_bytes(bytes)
+          |> VarInt.encode_binary()
 
-        %{script: script} = %Contract{}
-        |> Helpers.push(data)
-        |> VarIntHelpers.get_varint()
+        %{script: script} =
+          %Contract{}
+          |> Helpers.push(data)
+          |> VarIntHelpers.get_varint()
 
         assert {:ok, vm} = VM.eval(%VM{}, script)
         assert vm.stack == [ScriptNum.encode(bytes), data]
@@ -24,9 +26,10 @@ defmodule BSV.Contract.VarIntHelpersTest do
       Enum.each([32, 320, 320_000], fn bytes ->
         data = :crypto.strong_rand_bytes(bytes)
 
-        %{script: script} = %Contract{}
-        |> Helpers.push(VarInt.encode_binary(data) <> <<0,0,0,0>>)
-        |> VarIntHelpers.read_varint()
+        %{script: script} =
+          %Contract{}
+          |> Helpers.push(VarInt.encode_binary(data) <> <<0, 0, 0, 0>>)
+          |> VarIntHelpers.read_varint()
 
         assert {:ok, vm} = VM.eval(%VM{}, script)
         assert vm.stack == [data, <<0, 0, 0, 0>>]
@@ -39,9 +42,10 @@ defmodule BSV.Contract.VarIntHelpersTest do
       Enum.each([32, 320, 320_000], fn bytes ->
         data = :crypto.strong_rand_bytes(bytes)
 
-        %{script: script} = %Contract{}
-        |> Helpers.push(VarInt.encode_binary(data))
-        |> VarIntHelpers.trim_varint()
+        %{script: script} =
+          %Contract{}
+          |> Helpers.push(VarInt.encode_binary(data))
+          |> VarIntHelpers.trim_varint()
 
         assert {:ok, vm} = VM.eval(%VM{}, script)
         assert vm.stack == [data]

@@ -24,6 +24,7 @@ defmodule BSV.Util do
     case do_decode(data, encoding) do
       {:ok, data} ->
         {:ok, data}
+
       :error ->
         {:error, {:invalid_encoding, encoding}}
     end
@@ -44,6 +45,7 @@ defmodule BSV.Util do
     case decode(data, encoding) do
       {:ok, data} ->
         data
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
@@ -90,5 +92,4 @@ defmodule BSV.Util do
     |> Enum.reverse()
     |> :binary.list_to_bin()
   end
-
 end

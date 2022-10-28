@@ -40,8 +40,8 @@ defmodule BSV.TxBuilder do
   import BSV.Util, only: [reverse_bin: 1]
 
   @default_rates %{
-    mine: %{ data: 0.5, standard: 0.5 },
-    relay: %{ data: 0.25, standard: 0.25 }
+    mine: %{data: 0.5, standard: 0.5},
+    relay: %{data: 0.25, standard: 0.25}
   }
 
   @default_opts %{
@@ -57,12 +57,12 @@ defmodule BSV.TxBuilder do
 
   @typedoc "TxBuilder struct"
   @type t() :: %__MODULE__{
-    inputs: list(Contract.t()),
-    outputs: list(Contract.t()),
-    change_script: Script.t() | nil,
-    lock_time: non_neg_integer(),
-    options: map()
-  }
+          inputs: list(Contract.t()),
+          outputs: list(Contract.t()),
+          change_script: Script.t() | nil,
+          lock_time: non_neg_integer(),
+          options: map()
+        }
 
   @typedoc """
   Fee quote
@@ -71,33 +71,36 @@ defmodule BSV.TxBuilder do
   single number representing satoshis per bytes, or a map with keys for both
   `:data` and `:standard` miner rates.
   """
-  @type fee_quote() :: %{
-    mine: %{
-      data: number(),
-      standard: number()
-    },
-    relay: %{
-      data: number(),
-      standard: number()
-    },
-  } | %{
-    data: number(),
-    standard: number()
-  } | number()
+  @type fee_quote() ::
+          %{
+            mine: %{
+              data: number(),
+              standard: number()
+            },
+            relay: %{
+              data: number(),
+              standard: number()
+            }
+          }
+          | %{
+              data: number(),
+              standard: number()
+            }
+          | number()
 
   @doc """
   Adds the given unlocking script contract to the builder.
   """
   @spec add_input(t(), Contract.t()) :: t()
   def add_input(%__MODULE__{} = builder, %Contract{mfa: {_, :unlocking_script, _}} = input),
-    do: update_in(builder.inputs, & &1 ++ [input])
+    do: update_in(builder.inputs, &(&1 ++ [input]))
 
   @doc """
   Adds the given locking script contract to the builder.
   """
   @spec add_output(t(), Contract.t()) :: t()
   def add_output(%__MODULE__{} = builder, %Contract{mfa: {_, :locking_script, _}} = output),
-    do: update_in(builder.outputs, & &1 ++ [output])
+    do: update_in(builder.outputs, &(&1 ++ [output]))
 
   @doc """
   Calculates the required fee for the builder's transaction, optionally using
@@ -116,14 +119,18 @@ defmodule BSV.TxBuilder do
   def calc_required_fee(%__MODULE__{} = builder, %{mine: rates}),
     do: calc_required_fee(builder, rates)
 
-  def calc_required_fee(%__MODULE__{inputs: inputs, outputs: outputs}, %{data: _, standard: _} = rates) do
+  def calc_required_fee(
+        %__MODULE__{inputs: inputs, outputs: outputs},
+        %{data: _, standard: _} = rates
+      ) do
     [
-      {:standard, 4 + 4}, # version & locktime
+      # version & locktime
+      {:standard, 4 + 4},
       {:standard, length(inputs) |> VarInt.encode() |> byte_size()},
       {:standard, length(outputs) |> VarInt.encode() |> byte_size()}
     ]
-    |> Kernel.++(Enum.map(inputs, & calc_script_fee(Contract.to_txin(&1))))
-    |> Kernel.++(Enum.map(outputs, & calc_script_fee(Contract.to_txout(&1))))
+    |> Kernel.++(Enum.map(inputs, &calc_script_fee(Contract.to_txin(&1))))
+    |> Kernel.++(Enum.map(outputs, &calc_script_fee(Contract.to_txout(&1))))
     |> Enum.reduce(0, fn {type, bytes}, fee -> fee + ceil(rates[type] * bytes) end)
   end
 
@@ -133,8 +140,9 @@ defmodule BSV.TxBuilder do
   """
   @spec change_to(t(), Address.t() | Address.address_str()) :: t()
   def change_to(%__MODULE__{} = builder, %Address{} = address) do
-    script = P2PKH.lock(0, %{address: address})
-    |> Contract.to_script()
+    script =
+      P2PKH.lock(0, %{address: address})
+      |> Contract.to_script()
 
     Map.put(builder, :change_script, script)
   end
@@ -194,30 +202,35 @@ defmodule BSV.TxBuilder do
     tx = struct(Tx, lock_time: builder.lock_time)
 
     # First pass on populating inputs will zero out signatures
-    tx = Enum.reduce(inputs, tx, fn contract, tx ->
-      Tx.add_input(tx, Contract.to_txin(contract))
-    end)
+    tx =
+      Enum.reduce(inputs, tx, fn contract, tx ->
+        Tx.add_input(tx, Contract.to_txin(contract))
+      end)
 
     # Create outputs
-    tx = Enum.reduce(outputs, tx, fn contract, tx ->
-      Tx.add_output(tx, Contract.to_txout(contract))
-    end)
+    tx =
+      Enum.reduce(outputs, tx, fn contract, tx ->
+        Tx.add_output(tx, Contract.to_txout(contract))
+      end)
 
     # Append change if required
-    tx = case get_change_txout(builder) do
-      %TxOut{} = txout ->
-        Tx.add_output(tx, txout)
-      _ ->
-        tx
-    end
+    tx =
+      case get_change_txout(builder) do
+        %TxOut{} = txout ->
+          Tx.add_output(tx, txout)
+
+        _ ->
+          tx
+      end
 
     # Second pass on populating inputs with actual sigs
     Enum.reduce(Enum.with_index(inputs), tx, fn {contract, vin}, tx ->
-      txin = contract
-      |> Contract.put_ctx({tx, vin})
-      |> Contract.to_txin()
+      txin =
+        contract
+        |> Contract.put_ctx({tx, vin})
+        |> Contract.to_txin()
 
-      update_in(tx.inputs, & List.replace_at(&1, vin, txin))
+      update_in(tx.inputs, &List.replace_at(&1, vin, txin))
     end)
   end
 
@@ -245,6 +258,7 @@ defmodule BSV.TxBuilder do
     case script.chunks do
       [:OP_FALSE, :OP_RETURN | _chunks] ->
         {:data, TxOut.get_size(txout)}
+
       _ ->
         {:standard, TxOut.get_size(txout)}
     end
@@ -254,5 +268,4 @@ defmodule BSV.TxBuilder do
   # See: https://github.com/bitcoin-sv/bitcoin-sv/blob/master/src/primitives/transaction.h#L188-L208
   defp dust_threshold(%TxOut{} = txout, %{relay: rates}),
     do: 3 * floor((TxOut.get_size(txout) + 148) * rates.standard)
-
 end

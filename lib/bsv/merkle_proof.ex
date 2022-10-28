@@ -20,12 +20,12 @@ defmodule BSV.MerkleProof do
 
   @typedoc "Merkle proof struct"
   @type t() :: %__MODULE__{
-    flags: integer(),
-    index: non_neg_integer(),
-    subject: Tx.t() | Tx.hash(),
-    target: BlockHeader.t() | binary(),
-    nodes: list(Tx.hash())
-  }
+          flags: integer(),
+          index: non_neg_integer(),
+          subject: Tx.t() | Tx.hash(),
+          target: BlockHeader.t() | binary(),
+          nodes: list(Tx.hash())
+        }
 
   defguard is_txid?(flags) when (flags &&& 0x01) == 0
   defguard is_tx?(flags) when (flags &&& 0x01) == 1
@@ -49,8 +49,7 @@ defmodule BSV.MerkleProof do
     encoding = Keyword.get(opts, :encoding)
 
     with {:ok, data} <- decode(data, encoding),
-         {:ok, merkle_proof, _rest} <- Serializable.parse(%__MODULE__{}, data)
-    do
+         {:ok, merkle_proof, _rest} <- Serializable.parse(%__MODULE__{}, data) do
       {:ok, merkle_proof}
     end
   end
@@ -80,8 +79,8 @@ defmodule BSV.MerkleProof do
     do: hash_nodes(Tx.get_hash(tx), index, nodes)
 
   def calc_merkle_root(%__MODULE__{index: index, subject: tx_hash, nodes: nodes})
-    when is_binary(tx_hash),
-    do: hash_nodes(tx_hash, index, nodes)
+      when is_binary(tx_hash),
+      do: hash_nodes(tx_hash, index, nodes)
 
   # Iterates over and hashes the tx hashes
   defp hash_nodes(hash, _index, []), do: hash
@@ -90,7 +89,7 @@ defmodule BSV.MerkleProof do
     do: hash_nodes(hash, index, [hash | rest])
 
   defp hash_nodes(_hash, index, ["*" | _rest]) when rem(index, 2) == 1,
-    do: raise "invalid nodes"
+    do: raise("invalid nodes")
 
   defp hash_nodes(hash, index, [node | rest]) when rem(index, 2) == 0 do
     Hash.sha256_sha256(hash <> node)
@@ -120,7 +119,6 @@ defmodule BSV.MerkleProof do
     |> encode(encoding)
   end
 
-
   defimpl Serializable do
     defguard is_txid?(flags) when (flags &&& 0x01) == 0
     defguard is_tx?(flags) when (flags &&& 0x01) == 1
@@ -135,15 +133,15 @@ defmodule BSV.MerkleProof do
            {:ok, subject, data} <- parse_subject(data, flags),
            {:ok, target, data} <- parse_target(data, flags),
            {:ok, nodes_num, data} <- VarInt.parse_int(data),
-           {:ok, nodes, rest} <- parse_nodes(data, nodes_num)
-      do
-        {:ok, struct(merkle_proof, [
-          flags: flags,
-          index: index,
-          subject: subject,
-          target: target,
-          nodes: nodes
-        ]), rest}
+           {:ok, nodes, rest} <- parse_nodes(data, nodes_num) do
+        {:ok,
+         struct(merkle_proof,
+           flags: flags,
+           index: index,
+           subject: subject,
+           target: target,
+           nodes: nodes
+         ), rest}
       else
         {:error, error} ->
           {:error, error}
@@ -172,8 +170,7 @@ defmodule BSV.MerkleProof do
     # Parses the tx or tx hash as per the given flags
     defp parse_subject(data, flags) when is_tx?(flags) do
       with {:ok, rawtx, data} <- VarInt.parse_data(data),
-           {:ok, tx} <- Tx.from_binary(rawtx)
-      do
+           {:ok, tx} <- Tx.from_binary(rawtx) do
         {:ok, tx, data}
       end
     end
@@ -225,8 +222,8 @@ defmodule BSV.MerkleProof do
 
     # Serialises the lists of nodes
     defp serialize_node("*", data), do: data <> <<1>>
+
     defp serialize_node(<<hash::binary-size(32)>>, data),
       do: data <> <<0, hash::binary>>
   end
-
 end

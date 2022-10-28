@@ -68,8 +68,7 @@ defmodule BSV.Contract.P2RPH do
 
   @impl true
   def unlocking_script(ctx, %{k: k, keypair: keypair})
-    when is_binary(k) or is_integer(k)
-  do
+      when is_binary(k) or is_integer(k) do
     ctx
     |> sig(keypair.privkey)
     |> sig_with_k(keypair.privkey, k)
@@ -90,14 +89,16 @@ defmodule BSV.Contract.P2RPH do
   """
   @spec get_r(binary()) :: binary()
   def get_r(<<k::big-256>>) do
-    r = @crv[:G]
-    |> Point.mul(k)
-    |> Map.get(:x)
-    |> mod(@crv[:n])
+    r =
+      @crv[:G]
+      |> Point.mul(k)
+      |> Map.get(:x)
+      |> mod(@crv[:n])
 
     case <<r::big-256>> do
       <<r0, _::binary>> = r when r0 > 127 ->
         <<0, r::binary>>
+
       r ->
         r
     end
@@ -105,21 +106,21 @@ defmodule BSV.Contract.P2RPH do
 
   # Signs the transaction context using the given K value
   defp sig_with_k(
-    %Contract{ctx: {tx, vin}, opts: opts, subject: %UTXO{txout: txout}} = ctx,
-    %PrivKey{d: privkey},
-    k
-  ) do
+         %Contract{ctx: {tx, vin}, opts: opts, subject: %UTXO{txout: txout}} = ctx,
+         %PrivKey{d: privkey},
+         k
+       ) do
     sighash_type = Keyword.get(opts, :sighash_type, Sig.sighash_flag(:default))
 
-    signature = tx
-    |> Sig.sighash(vin, txout, sighash_type)
-    |> Curvy.sign(privkey, hash: false, k: k)
-    |> Kernel.<>(<<sighash_type>>)
+    signature =
+      tx
+      |> Sig.sighash(vin, txout, sighash_type)
+      |> Curvy.sign(privkey, hash: false, k: k)
+      |> Kernel.<>(<<sighash_type>>)
 
     Contract.script_push(ctx, signature)
   end
 
   defp sig_with_k(ctx, %PrivKey{} = _privkey, _k),
     do: Contract.script_push(ctx, <<0::568>>)
-
 end

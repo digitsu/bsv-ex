@@ -51,8 +51,8 @@ defmodule BSV.Hash do
   """
   @spec sha1_hmac(binary(), binary(), keyword()) :: binary()
   def sha1_hmac(data, key, opts \\ [])
-    when is_binary(data) and is_binary(key),
-    do: hmac(data, key, :sha, opts)
+      when is_binary(data) and is_binary(key),
+      do: hmac(data, key, :sha, opts)
 
   @doc """
   Computes the SHA-2 hash of a given input, outputting 256 bits.
@@ -83,8 +83,8 @@ defmodule BSV.Hash do
   """
   @spec sha256_hmac(binary(), binary(), keyword()) :: binary()
   def sha256_hmac(data, key, opts \\ [])
-    when is_binary(data) and is_binary(key),
-    do: hmac(data, key, :sha256, opts)
+      when is_binary(data) and is_binary(key),
+      do: hmac(data, key, :sha256, opts)
 
   @doc """
   Computes a RIPEMD hash of a SHA-256 hash, outputting 160 bits. This is
@@ -147,12 +147,13 @@ defmodule BSV.Hash do
   """
   @spec sha512_hmac(binary(), binary(), keyword()) :: binary()
   def sha512_hmac(data, key, opts \\ [])
-    when is_binary(data) and is_binary(key),
-    do: hmac(data, key, :sha512, opts)
+      when is_binary(data) and is_binary(key),
+      do: hmac(data, key, :sha512, opts)
 
   # Computes the hash of the given binary using the specified algorithm
   defp hash(data, alg, opts) do
     encoding = Keyword.get(opts, :encoding)
+
     :crypto.hash(alg, data)
     |> encode(encoding)
   end
@@ -161,8 +162,8 @@ defmodule BSV.Hash do
   # algorithm
   defp hmac(data, key, alg, opts) do
     encoding = Keyword.get(opts, :encoding)
+
     :crypto.mac(:hmac, alg, key, data)
     |> encode(encoding)
   end
-
 end

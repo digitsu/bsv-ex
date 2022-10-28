@@ -31,14 +31,14 @@ defmodule BSV.VM do
 
   @typedoc "VM struct"
   @type t() :: %__MODULE__{
-    ctx: ctx() | nil,
-    stack: list(),
-    alt_stack: list(),
-    if_stack: list(),
-    op_return: list(),
-    opts: map(),
-    error: nil | String.t
-  }
+          ctx: ctx() | nil,
+          stack: list(),
+          alt_stack: list(),
+          if_stack: list(),
+          op_return: list(),
+          opts: map(),
+          error: nil | String.t()
+        }
 
   @typedoc """
   Transaction context.
@@ -65,154 +65,147 @@ defmodule BSV.VM do
     do: eval(vm, chunks)
 
   def eval(%__MODULE__{error: error} = vm, _chunks)
-    when not is_nil(error),
-    do: {:error, vm}
+      when not is_nil(error),
+      do: {:error, vm}
 
   def eval(%__MODULE__{op_return: op_return} = vm, _chunks)
-    when length(op_return) > 0,
-    do: {:ok, vm}
+      when length(op_return) > 0,
+      do: {:ok, vm}
 
   def eval(%__MODULE__{} = vm, []),
     do: {:ok, vm}
 
   def eval(%__MODULE__{if_stack: [{:IF, false} | _]} = vm, [op | rest])
-    when op not in [:OP_IF, :OP_ELSE, :OP_ENDIF],
-    do: eval(vm, rest)
+      when op not in [:OP_IF, :OP_ELSE, :OP_ENDIF],
+      do: eval(vm, rest)
 
   def eval(%__MODULE__{if_stack: [{:ELSE, false} | _]} = vm, [op | rest])
-    when op not in [:OP_IF, :OP_ENDIF],
-    do: eval(vm, rest)
+      when op not in [:OP_IF, :OP_ENDIF],
+      do: eval(vm, rest)
 
   def eval(%__MODULE__{} = vm, [chunk | rest]) do
-    vm = case chunk do
-      data when is_binary(data) or is_number(data) -> op_pushdata(vm, data)
-
-      # 1. Constants
-      :OP_FALSE -> op_pushdata(vm, 0)
-      :OP_0 -> op_pushdata(vm, 0)
-      :OP_1NEGATE -> op_pushdata(vm, -1)
-      :OP_TRUE -> op_pushdata(vm, 1)
-      :OP_1 -> op_pushdata(vm, 1)
-      :OP_2 -> op_pushdata(vm, 2)
-      :OP_3 -> op_pushdata(vm, 3)
-      :OP_4 -> op_pushdata(vm, 4)
-      :OP_5 -> op_pushdata(vm, 5)
-      :OP_6 -> op_pushdata(vm, 6)
-      :OP_7 -> op_pushdata(vm, 7)
-      :OP_8 -> op_pushdata(vm, 8)
-      :OP_9 -> op_pushdata(vm, 9)
-      :OP_10 -> op_pushdata(vm, 10)
-      :OP_11 -> op_pushdata(vm, 11)
-      :OP_12 -> op_pushdata(vm, 12)
-      :OP_13 -> op_pushdata(vm, 13)
-      :OP_14 -> op_pushdata(vm, 14)
-      :OP_15 -> op_pushdata(vm, 15)
-      :OP_16 -> op_pushdata(vm, 16)
-
-      # 2. Control
-      :OP_NOP -> op_nop(vm)
-      :OP_VER -> op_ver(vm)
-      :OP_IF -> op_if(vm)
-      :OP_NOTIF -> op_notif(vm)
-      :OP_VERIF -> op_verif(vm)
-      :OP_VERNOTIF -> op_vernotif(vm)
-      :OP_ELSE -> op_else(vm)
-      :OP_ENDIF -> op_endif(vm)
-      :OP_VERIFY -> op_verify(vm)
-      :OP_RETURN -> op_return(vm, rest)
-
-      # 3. Stack
-      :OP_TOALTSTACK -> op_toaltstack(vm)
-      :OP_FROMALTSTACK -> op_fromaltstack(vm)
-      :OP_2DROP -> op_2drop(vm)
-      :OP_2DUP -> op_2dup(vm)
-      :OP_3DUP -> op_3dup(vm)
-      :OP_2OVER -> op_2over(vm)
-      :OP_2ROT -> op_2rot(vm)
-      :OP_2SWAP -> op_2swap(vm)
-      :OP_IFDUP -> op_ifdup(vm)
-      :OP_DEPTH -> op_depth(vm)
-      :OP_DROP -> op_drop(vm)
-      :OP_DUP -> op_dup(vm)
-      :OP_NIP -> op_nip(vm)
-      :OP_OVER -> op_over(vm)
-      :OP_PICK -> op_pick(vm)
-      :OP_ROLL -> op_roll(vm)
-      :OP_ROT -> op_rot(vm)
-      :OP_SWAP -> op_swap(vm)
-      :OP_TUCK -> op_tuck(vm)
-
-      # 4. Data manipulation
-      :OP_CAT -> op_cat(vm)
-      :OP_SPLIT -> op_split(vm)
-      :OP_NUM2BIN -> op_num2bin(vm)
-      :OP_BIN2NUM -> op_bin2num(vm)
-      :OP_SIZE -> op_size(vm)
-
-      # 5. Bitwise logic
-      :OP_INVERT -> op_invert(vm)
-      :OP_AND -> op_and(vm)
-      :OP_OR -> op_or(vm)
-      :OP_XOR -> op_xor(vm)
-      :OP_EQUAL -> op_equal(vm)
-      :OP_EQUALVERIFY -> op_equalverify(vm)
-
-      # 6. Arithmetic
-      :OP_1ADD -> op_1add(vm)
-      :OP_1SUB -> op_1sub(vm)
-      :OP_2MUL -> op_2mul(vm)
-      :OP_2DIV -> op_2div(vm)
-      :OP_NEGATE -> op_negate(vm)
-      :OP_ABS -> op_abs(vm)
-      :OP_NOT -> op_not(vm)
-      :OP_0NOTEQUAL -> op_0notequal(vm)
-      :OP_ADD -> op_add(vm)
-      :OP_SUB -> op_sub(vm)
-      :OP_MUL -> op_mul(vm)
-      :OP_DIV -> op_div(vm)
-      :OP_MOD -> op_mod(vm)
-      :OP_LSHIFT -> op_lshift(vm)
-      :OP_RSHIFT -> op_rshift(vm)
-      :OP_BOOLAND -> op_booland(vm)
-      :OP_BOOLOR -> op_boolor(vm)
-      :OP_NUMEQUAL -> op_numequal(vm)
-      :OP_NUMEQUALVERIFY -> op_numequalverify(vm)
-      :OP_NUMNOTEQUAL -> op_numnotequal(vm)
-      :OP_LESSTHAN -> op_lessthan(vm)
-      :OP_GREATERTHAN -> op_greaterthan(vm)
-      :OP_LESSTHANOREQUAL -> op_lessthanorequal(vm)
-      :OP_GREATERTHANOREQUAL -> op_greaterthanorequal(vm)
-      :OP_MIN -> op_min(vm)
-      :OP_MAX -> op_max(vm)
-      :OP_WITHIN -> op_within(vm)
-
-      # 7. Cryptography
-      :OP_RIPEMD160 -> op_ripemd160(vm)
-      :OP_SHA1 -> op_sha1(vm)
-      :OP_SHA256 -> op_sha256(vm)
-      :OP_HASH160 -> op_hash160(vm)
-      :OP_HASH256 -> op_hash256(vm)
-      :OP_CODESEPARATOR -> op_nop(vm)
-      :OP_CHECKSIG -> op_checksig(vm)
-      :OP_CHECKSIGVERIFY -> op_checksigverify(vm)
-      :OP_CHECKMULTISIG -> op_checkmultisig(vm)
-      :OP_CHECKMULTISIGVERIFY -> op_checkmultisigverify(vm)
-
-      # Nops and reserved words
-      :OP_NOP1 -> op_nop(vm)
-      :OP_NOP2 -> op_nop(vm)
-      :OP_NOP3 -> op_nop(vm)
-      :OP_NOP4 -> op_nop(vm)
-      :OP_NOP5 -> op_nop(vm)
-      :OP_NOP6 -> op_nop(vm)
-      :OP_NOP7 -> op_nop(vm)
-      :OP_NOP8 -> op_nop(vm)
-      :OP_NOP9 -> op_nop(vm)
-      :OP_NOP10 -> op_nop(vm)
-      :OP_RESERVED -> op_reserved(vm)
-      :OP_RESERVED1 -> op_reserved(vm)
-      :OP_RESERVED2 -> op_reserved(vm)
-    end
+    vm =
+      case chunk do
+        data when is_binary(data) or is_number(data) -> op_pushdata(vm, data)
+        # 1. Constants
+        :OP_FALSE -> op_pushdata(vm, 0)
+        :OP_0 -> op_pushdata(vm, 0)
+        :OP_1NEGATE -> op_pushdata(vm, -1)
+        :OP_TRUE -> op_pushdata(vm, 1)
+        :OP_1 -> op_pushdata(vm, 1)
+        :OP_2 -> op_pushdata(vm, 2)
+        :OP_3 -> op_pushdata(vm, 3)
+        :OP_4 -> op_pushdata(vm, 4)
+        :OP_5 -> op_pushdata(vm, 5)
+        :OP_6 -> op_pushdata(vm, 6)
+        :OP_7 -> op_pushdata(vm, 7)
+        :OP_8 -> op_pushdata(vm, 8)
+        :OP_9 -> op_pushdata(vm, 9)
+        :OP_10 -> op_pushdata(vm, 10)
+        :OP_11 -> op_pushdata(vm, 11)
+        :OP_12 -> op_pushdata(vm, 12)
+        :OP_13 -> op_pushdata(vm, 13)
+        :OP_14 -> op_pushdata(vm, 14)
+        :OP_15 -> op_pushdata(vm, 15)
+        :OP_16 -> op_pushdata(vm, 16)
+        # 2. Control
+        :OP_NOP -> op_nop(vm)
+        :OP_VER -> op_ver(vm)
+        :OP_IF -> op_if(vm)
+        :OP_NOTIF -> op_notif(vm)
+        :OP_VERIF -> op_verif(vm)
+        :OP_VERNOTIF -> op_vernotif(vm)
+        :OP_ELSE -> op_else(vm)
+        :OP_ENDIF -> op_endif(vm)
+        :OP_VERIFY -> op_verify(vm)
+        :OP_RETURN -> op_return(vm, rest)
+        # 3. Stack
+        :OP_TOALTSTACK -> op_toaltstack(vm)
+        :OP_FROMALTSTACK -> op_fromaltstack(vm)
+        :OP_2DROP -> op_2drop(vm)
+        :OP_2DUP -> op_2dup(vm)
+        :OP_3DUP -> op_3dup(vm)
+        :OP_2OVER -> op_2over(vm)
+        :OP_2ROT -> op_2rot(vm)
+        :OP_2SWAP -> op_2swap(vm)
+        :OP_IFDUP -> op_ifdup(vm)
+        :OP_DEPTH -> op_depth(vm)
+        :OP_DROP -> op_drop(vm)
+        :OP_DUP -> op_dup(vm)
+        :OP_NIP -> op_nip(vm)
+        :OP_OVER -> op_over(vm)
+        :OP_PICK -> op_pick(vm)
+        :OP_ROLL -> op_roll(vm)
+        :OP_ROT -> op_rot(vm)
+        :OP_SWAP -> op_swap(vm)
+        :OP_TUCK -> op_tuck(vm)
+        # 4. Data manipulation
+        :OP_CAT -> op_cat(vm)
+        :OP_SPLIT -> op_split(vm)
+        :OP_NUM2BIN -> op_num2bin(vm)
+        :OP_BIN2NUM -> op_bin2num(vm)
+        :OP_SIZE -> op_size(vm)
+        # 5. Bitwise logic
+        :OP_INVERT -> op_invert(vm)
+        :OP_AND -> op_and(vm)
+        :OP_OR -> op_or(vm)
+        :OP_XOR -> op_xor(vm)
+        :OP_EQUAL -> op_equal(vm)
+        :OP_EQUALVERIFY -> op_equalverify(vm)
+        # 6. Arithmetic
+        :OP_1ADD -> op_1add(vm)
+        :OP_1SUB -> op_1sub(vm)
+        :OP_2MUL -> op_2mul(vm)
+        :OP_2DIV -> op_2div(vm)
+        :OP_NEGATE -> op_negate(vm)
+        :OP_ABS -> op_abs(vm)
+        :OP_NOT -> op_not(vm)
+        :OP_0NOTEQUAL -> op_0notequal(vm)
+        :OP_ADD -> op_add(vm)
+        :OP_SUB -> op_sub(vm)
+        :OP_MUL -> op_mul(vm)
+        :OP_DIV -> op_div(vm)
+        :OP_MOD -> op_mod(vm)
+        :OP_LSHIFT -> op_lshift(vm)
+        :OP_RSHIFT -> op_rshift(vm)
+        :OP_BOOLAND -> op_booland(vm)
+        :OP_BOOLOR -> op_boolor(vm)
+        :OP_NUMEQUAL -> op_numequal(vm)
+        :OP_NUMEQUALVERIFY -> op_numequalverify(vm)
+        :OP_NUMNOTEQUAL -> op_numnotequal(vm)
+        :OP_LESSTHAN -> op_lessthan(vm)
+        :OP_GREATERTHAN -> op_greaterthan(vm)
+        :OP_LESSTHANOREQUAL -> op_lessthanorequal(vm)
+        :OP_GREATERTHANOREQUAL -> op_greaterthanorequal(vm)
+        :OP_MIN -> op_min(vm)
+        :OP_MAX -> op_max(vm)
+        :OP_WITHIN -> op_within(vm)
+        # 7. Cryptography
+        :OP_RIPEMD160 -> op_ripemd160(vm)
+        :OP_SHA1 -> op_sha1(vm)
+        :OP_SHA256 -> op_sha256(vm)
+        :OP_HASH160 -> op_hash160(vm)
+        :OP_HASH256 -> op_hash256(vm)
+        :OP_CODESEPARATOR -> op_nop(vm)
+        :OP_CHECKSIG -> op_checksig(vm)
+        :OP_CHECKSIGVERIFY -> op_checksigverify(vm)
+        :OP_CHECKMULTISIG -> op_checkmultisig(vm)
+        :OP_CHECKMULTISIGVERIFY -> op_checkmultisigverify(vm)
+        # Nops and reserved words
+        :OP_NOP1 -> op_nop(vm)
+        :OP_NOP2 -> op_nop(vm)
+        :OP_NOP3 -> op_nop(vm)
+        :OP_NOP4 -> op_nop(vm)
+        :OP_NOP5 -> op_nop(vm)
+        :OP_NOP6 -> op_nop(vm)
+        :OP_NOP7 -> op_nop(vm)
+        :OP_NOP8 -> op_nop(vm)
+        :OP_NOP9 -> op_nop(vm)
+        :OP_NOP10 -> op_nop(vm)
+        :OP_RESERVED -> op_reserved(vm)
+        :OP_RESERVED1 -> op_reserved(vm)
+        :OP_RESERVED2 -> op_reserved(vm)
+      end
 
     eval(vm, rest)
   end
@@ -228,6 +221,7 @@ defmodule BSV.VM do
     case eval(vm, script) do
       {:ok, vm} ->
         vm
+
       {:error, %__MODULE__{:error => error}} ->
         raise error
     end
@@ -238,7 +232,7 @@ defmodule BSV.VM do
   """
   @spec op_pushdata(t(), binary() | number()) :: t()
   def op_pushdata(vm, data) when is_binary(data),
-    do: update_in(vm.stack, & [data | &1])
+    do: update_in(vm.stack, &[data | &1])
 
   def op_pushdata(vm, data) when is_number(data),
     do: op_pushdata(vm, ScriptNum.encode(data))
@@ -265,12 +259,12 @@ defmodule BSV.VM do
   def op_if(%__MODULE__{stack: []} = vm), do: err(vm, "OP_IF stack empty")
 
   def op_if(%__MODULE__{if_stack: [{_, false} | _]} = vm),
-    do: Map.update(vm, :if_stack, [], & [{:IF, false} | &1])
+    do: Map.update(vm, :if_stack, [], &[{:IF, false} | &1])
 
   def op_if(%__MODULE__{stack: [top | _stack]} = vm) do
     vm
     |> op_drop()
-    |> Map.update(:if_stack, [], & [{:IF, true?(top)} | &1])
+    |> Map.update(:if_stack, [], &[{:IF, true?(top)} | &1])
   end
 
   @doc """
@@ -282,12 +276,12 @@ defmodule BSV.VM do
   def op_notif(%__MODULE__{stack: []} = vm), do: err(vm, "OP_NOTIF stack empty")
 
   def op_notif(%__MODULE__{if_stack: [{_, false} | _]} = vm),
-    do: Map.update(vm, :if_stack, [], & [{:IF, false} | &1])
+    do: Map.update(vm, :if_stack, [], &[{:IF, false} | &1])
 
   def op_notif(%__MODULE__{stack: [top | _stack]} = vm) do
     vm
     |> op_drop()
-    |> Map.update(:if_stack, [], & [{:IF, !true?(top)} | &1])
+    |> Map.update(:if_stack, [], &[{:IF, !true?(top)} | &1])
   end
 
   @doc """
@@ -365,7 +359,7 @@ defmodule BSV.VM do
 
   def op_toaltstack(%__MODULE__{stack: [top | stack]} = vm) do
     vm
-    |> Map.update(:alt_stack, [], & [top | &1])
+    |> Map.update(:alt_stack, [], &[top | &1])
     |> Map.put(:stack, stack)
   end
 
@@ -378,7 +372,7 @@ defmodule BSV.VM do
 
   def op_fromaltstack(%__MODULE__{alt_stack: [top | stack]} = vm) do
     vm
-    |> Map.update(:stack, [], & [top | &1])
+    |> Map.update(:stack, [], &[top | &1])
     |> Map.put(:alt_stack, stack)
   end
 
@@ -387,8 +381,8 @@ defmodule BSV.VM do
   """
   @spec op_2drop(t()) :: t()
   def op_2drop(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_2DROP invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_2DROP invalid stack length")
 
   def op_2drop(%__MODULE__{stack: [_, _ | stack]} = vm),
     do: put_in(vm.stack, stack)
@@ -398,41 +392,41 @@ defmodule BSV.VM do
   """
   @spec op_2dup(t()) :: t()
   def op_2dup(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_2DUP invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_2DUP invalid stack length")
 
   def op_2dup(%__MODULE__{stack: [a, b | _]} = vm),
-    do: update_in(vm.stack, & [a, b | &1])
+    do: update_in(vm.stack, &[a, b | &1])
 
   @doc """
   Duplicates the top three items on the stack.
   """
   @spec op_3dup(t()) :: t()
   def op_3dup(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 3,
-    do: err(vm, "OP_3DUP invalid stack length")
+      when length(stack) < 3,
+      do: err(vm, "OP_3DUP invalid stack length")
 
   def op_3dup(%__MODULE__{stack: [a, b, c | _]} = vm),
-    do: update_in(vm.stack, & [a, b, c | &1])
+    do: update_in(vm.stack, &[a, b, c | &1])
 
   @doc """
   Copies two items two spaces back to the top of the stack.
   """
   @spec op_2over(t()) :: t()
   def op_2over(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 4,
-    do: err(vm, "OP_2OVER invalid stack length")
+      when length(stack) < 4,
+      do: err(vm, "OP_2OVER invalid stack length")
 
   def op_2over(%__MODULE__{stack: [_a, _b, c, d | _]} = vm),
-    do: update_in(vm.stack, & [c, d | &1])
+    do: update_in(vm.stack, &[c, d | &1])
 
   @doc """
   Moves the 5th and 6th items to top of stack.
   """
   @spec op_2rot(t()) :: t()
   def op_2rot(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 6,
-    do: err(vm, "OP_2ROT invalid stack length")
+      when length(stack) < 6,
+      do: err(vm, "OP_2ROT invalid stack length")
 
   def op_2rot(%__MODULE__{stack: [a, b, c, d, e, f | stack]} = vm),
     do: put_in(vm.stack, [e, f, a, b, c, d | stack])
@@ -442,8 +436,8 @@ defmodule BSV.VM do
   """
   @spec op_2swap(t()) :: t()
   def op_2swap(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 4,
-    do: err(vm, "OP_2SWAP invalid stack length")
+      when length(stack) < 4,
+      do: err(vm, "OP_2SWAP invalid stack length")
 
   def op_2swap(%__MODULE__{stack: [a, b, c, d | stack]} = vm),
     do: put_in(vm.stack, [c, d, a, b | stack])
@@ -453,8 +447,9 @@ defmodule BSV.VM do
   """
   @spec op_ifdup(t()) :: t()
   def op_ifdup(%__MODULE__{stack: []} = vm), do: err(vm, "OP_IFDUP stack empty")
+
   def op_ifdup(%__MODULE__{stack: [top | _]} = vm) do
-    if true?(top), do: update_in(vm.stack, & [top | &1]), else: vm
+    if true?(top), do: update_in(vm.stack, &[top | &1]), else: vm
   end
 
   @doc """
@@ -478,30 +473,31 @@ defmodule BSV.VM do
   """
   @spec op_dup(t()) :: t()
   def op_dup(%__MODULE__{stack: []} = vm), do: err(vm, "OP_DUP stack empty")
+
   def op_dup(%__MODULE__{stack: [top | _]} = vm),
-    do: update_in(vm.stack, & [top | &1])
+    do: update_in(vm.stack, &[top | &1])
 
   @doc """
   Removes the second to top item from the stack.
   """
   @spec op_nip(t()) :: t()
   def op_nip(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_NIP invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_NIP invalid stack length")
 
   def op_nip(%__MODULE__{} = vm),
-    do: update_in(vm.stack, & List.delete_at(&1, 1))
+    do: update_in(vm.stack, &List.delete_at(&1, 1))
 
   @doc """
   Copies the second to top stack item to the top.
   """
   @spec op_over(t()) :: t()
   def op_over(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_OVER invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_OVER invalid stack length")
 
   def op_over(%__MODULE__{stack: [_a, b | _]} = vm),
-    do: update_in(vm.stack, & [b | &1])
+    do: update_in(vm.stack, &[b | &1])
 
   @doc """
   Removes the top stack item and uses it as an index length, then copies the nth
@@ -509,8 +505,10 @@ defmodule BSV.VM do
   """
   @spec op_pick(t()) :: t()
   def op_pick(%__MODULE__{stack: []} = vm), do: err(vm, "OP_PICK stack empty")
+
   def op_pick(%__MODULE__{stack: [top | stack]} = vm) do
     i = ScriptNum.decode(top)
+
     case Enum.at(stack, i) do
       nil -> err(vm, "OP_PICK invalid stack length")
       val -> put_in(vm.stack, [val | stack])
@@ -523,8 +521,10 @@ defmodule BSV.VM do
   """
   @spec op_roll(t()) :: t()
   def op_roll(%__MODULE__{stack: []} = vm), do: err(vm, "OP_ROLL stack empty")
+
   def op_roll(%__MODULE__{stack: [top | stack]} = vm) do
     i = ScriptNum.decode(top)
+
     case List.pop_at(stack, i) do
       {nil, _} -> err(vm, "OP_ROLL invalid stack length")
       {val, stack} -> put_in(vm.stack, [val | stack])
@@ -537,8 +537,8 @@ defmodule BSV.VM do
   """
   @spec op_rot(t()) :: t()
   def op_rot(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 3,
-    do: err(vm, "OP_ROT invalid stack length")
+      when length(stack) < 3,
+      do: err(vm, "OP_ROT invalid stack length")
 
   def op_rot(%__MODULE__{stack: [a, b, c | stack]} = vm),
     do: put_in(vm.stack, [c, a, b | stack])
@@ -549,8 +549,8 @@ defmodule BSV.VM do
   """
   @spec op_swap(t()) :: t()
   def op_swap(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_SWAP invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_SWAP invalid stack length")
 
   def op_swap(%__MODULE__{stack: [a, b | stack]} = vm),
     do: put_in(vm.stack, [b, a | stack])
@@ -560,19 +560,19 @@ defmodule BSV.VM do
   """
   @spec op_tuck(t()) :: t()
   def op_tuck(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_TUCK invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_TUCK invalid stack length")
 
   def op_tuck(%__MODULE__{stack: [top | _]} = vm),
-    do: update_in(vm.stack, & List.insert_at(&1, 2, top))
+    do: update_in(vm.stack, &List.insert_at(&1, 2, top))
 
   @doc """
   Concatenates the top two stack items into one binary.
   """
   @spec op_cat(t()) :: t()
   def op_cat(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_CAT invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_CAT invalid stack length")
 
   def op_cat(%__MODULE__{stack: [a, b | stack]} = vm),
     do: put_in(vm.stack, [b <> a | stack])
@@ -583,8 +583,8 @@ defmodule BSV.VM do
   """
   @spec op_split(t()) :: t()
   def op_split(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_SPLIT invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_SPLIT invalid stack length")
 
   def op_split(%__MODULE__{stack: [top, val | stack]} = vm) do
     i = ScriptNum.decode(top)
@@ -598,8 +598,8 @@ defmodule BSV.VM do
   """
   @spec op_num2bin(t()) :: t()
   def op_num2bin(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_NUM2BIN invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_NUM2BIN invalid stack length")
 
   def op_num2bin(%__MODULE__{stack: [top, bin | stack]} = vm) do
     with pad when pad >= 0 <- ScriptNum.decode(top) - byte_size(bin) do
@@ -630,6 +630,7 @@ defmodule BSV.VM do
   """
   @spec op_size(t()) :: t()
   def op_size(%__MODULE__{stack: []} = vm), do: err(vm, "OP_SIZE stack empty")
+
   def op_size(%__MODULE__{stack: [top | _] = stack} = vm) do
     val = byte_size(top) |> ScriptNum.encode()
     put_in(vm.stack, [val | stack])
@@ -640,11 +641,14 @@ defmodule BSV.VM do
   """
   @spec op_invert(t()) :: t()
   def op_invert(%__MODULE__{stack: []} = vm), do: err(vm, "OP_INVERT stack empty")
+
   def op_invert(%__MODULE__{stack: [top | stack]} = vm) do
-    val = top
-    |> :binary.bin_to_list()
-    |> Enum.map(& bxor(&1, 255))
-    |> :binary.list_to_bin()
+    val =
+      top
+      |> :binary.bin_to_list()
+      |> Enum.map(&bxor(&1, 255))
+      |> :binary.list_to_bin()
+
     put_in(vm.stack, [val | stack])
   end
 
@@ -654,17 +658,18 @@ defmodule BSV.VM do
   """
   @spec op_and(t()) :: t()
   def op_and(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_AND invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_AND invalid stack length")
 
   def op_and(%__MODULE__{stack: [a, b | stack]} = vm)
-    when is_binary(a) and is_binary(b)
-    and byte_size(a) == byte_size(b)
-  do
-    val = [:binary.bin_to_list(b), :binary.bin_to_list(a)]
-    |> List.zip()
-    |> Enum.map(fn {b, a} -> b &&& a end)
-    |> :binary.list_to_bin()
+      when is_binary(a) and is_binary(b) and
+             byte_size(a) == byte_size(b) do
+    val =
+      [:binary.bin_to_list(b), :binary.bin_to_list(a)]
+      |> List.zip()
+      |> Enum.map(fn {b, a} -> b &&& a end)
+      |> :binary.list_to_bin()
+
     put_in(vm.stack, [val | stack])
   end
 
@@ -677,17 +682,18 @@ defmodule BSV.VM do
   """
   @spec op_or(t()) :: t()
   def op_or(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_OR invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_OR invalid stack length")
 
   def op_or(%__MODULE__{stack: [a, b | stack]} = vm)
-    when is_binary(a) and is_binary(b)
-    and byte_size(a) == byte_size(b)
-  do
-    val = [:binary.bin_to_list(b), :binary.bin_to_list(a)]
-    |> List.zip()
-    |> Enum.map(fn {b, a} -> b ||| a end)
-    |> :binary.list_to_bin()
+      when is_binary(a) and is_binary(b) and
+             byte_size(a) == byte_size(b) do
+    val =
+      [:binary.bin_to_list(b), :binary.bin_to_list(a)]
+      |> List.zip()
+      |> Enum.map(fn {b, a} -> b ||| a end)
+      |> :binary.list_to_bin()
+
     put_in(vm.stack, [val | stack])
   end
 
@@ -700,17 +706,18 @@ defmodule BSV.VM do
   """
   @spec op_xor(t()) :: t()
   def op_xor(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_XOR invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_XOR invalid stack length")
 
   def op_xor(%__MODULE__{stack: [a, b | stack]} = vm)
-    when is_binary(a) and is_binary(b)
-    and byte_size(a) == byte_size(b)
-  do
-    val = [:binary.bin_to_list(b), :binary.bin_to_list(a)]
-    |> List.zip()
-    |> Enum.map(fn {b, a} -> bxor(b, a) end)
-    |> :binary.list_to_bin()
+      when is_binary(a) and is_binary(b) and
+             byte_size(a) == byte_size(b) do
+    val =
+      [:binary.bin_to_list(b), :binary.bin_to_list(a)]
+      |> List.zip()
+      |> Enum.map(fn {b, a} -> bxor(b, a) end)
+      |> :binary.list_to_bin()
+
     put_in(vm.stack, [val | stack])
   end
 
@@ -723,15 +730,15 @@ defmodule BSV.VM do
   """
   @spec op_equal(t()) :: t()
   def op_equal(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_EQUAL invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_EQUAL invalid stack length")
 
   def op_equal(%__MODULE__{opts: %{simulate: true}, stack: [_a, _b | stack]} = vm),
     do: put_in(vm.stack, [ScriptNum.encode(1) | stack])
 
   def op_equal(%__MODULE__{stack: [a, b | stack]} = vm)
-    when a == b,
-    do: put_in(vm.stack, [ScriptNum.encode(1) | stack])
+      when a == b,
+      do: put_in(vm.stack, [ScriptNum.encode(1) | stack])
 
   def op_equal(%__MODULE__{stack: [_a, _b | stack]} = vm),
     do: put_in(vm.stack, [ScriptNum.encode(0) | stack])
@@ -747,6 +754,7 @@ defmodule BSV.VM do
   """
   @spec op_1add(t()) :: t()
   def op_1add(%__MODULE__{stack: []} = vm), do: err(vm, "OP_1ADD stack empty")
+
   def op_1add(%__MODULE__{stack: [top | stack]} = vm) do
     val = ScriptNum.decode(top) + 1
     put_in(vm.stack, [ScriptNum.encode(val) | stack])
@@ -757,6 +765,7 @@ defmodule BSV.VM do
   """
   @spec op_1sub(t()) :: t()
   def op_1sub(%__MODULE__{stack: []} = vm), do: err(vm, "OP_1SUB stack empty")
+
   def op_1sub(%__MODULE__{stack: [top | stack]} = vm) do
     val = ScriptNum.decode(top) - 1
     put_in(vm.stack, [ScriptNum.encode(val) | stack])
@@ -779,6 +788,7 @@ defmodule BSV.VM do
   """
   @spec op_negate(t()) :: t()
   def op_negate(%__MODULE__{stack: []} = vm), do: err(vm, "OP_NEGATE stack empty")
+
   def op_negate(%__MODULE__{stack: [top | stack]} = vm) do
     val = ScriptNum.decode(top) * -1
     put_in(vm.stack, [ScriptNum.encode(val) | stack])
@@ -789,6 +799,7 @@ defmodule BSV.VM do
   """
   @spec op_abs(t()) :: t()
   def op_abs(%__MODULE__{stack: []} = vm), do: err(vm, "OP_ABS stack empty")
+
   def op_abs(%__MODULE__{stack: [top | stack]} = vm) do
     val = ScriptNum.decode(top) |> abs()
     put_in(vm.stack, [ScriptNum.encode(val) | stack])
@@ -799,6 +810,7 @@ defmodule BSV.VM do
   """
   @spec op_not(t()) :: t()
   def op_not(%__MODULE__{stack: []} = vm), do: err(vm, "OP_NOT stack empty")
+
   def op_not(%__MODULE__{stack: [top | stack]} = vm) do
     val = if true?(top), do: 0, else: 1
     put_in(vm.stack, [ScriptNum.encode(val) | stack])
@@ -823,8 +835,8 @@ defmodule BSV.VM do
   """
   @spec op_add(t()) :: t()
   def op_add(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_ADD invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_ADD invalid stack length")
 
   def op_add(%__MODULE__{stack: [a, b | stack]} = vm) do
     val = ScriptNum.decode(b) + ScriptNum.decode(a)
@@ -837,8 +849,8 @@ defmodule BSV.VM do
   """
   @spec op_sub(t()) :: t()
   def op_sub(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_SUB invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_SUB invalid stack length")
 
   def op_sub(%__MODULE__{stack: [a, b | stack]} = vm) do
     val = ScriptNum.decode(b) - ScriptNum.decode(a)
@@ -851,8 +863,8 @@ defmodule BSV.VM do
   """
   @spec op_mul(t()) :: t()
   def op_mul(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_MUL invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_MUL invalid stack length")
 
   def op_mul(%__MODULE__{stack: [a, b | stack]} = vm) do
     val = ScriptNum.decode(b) * ScriptNum.decode(a)
@@ -865,8 +877,8 @@ defmodule BSV.VM do
   """
   @spec op_div(t()) :: t()
   def op_div(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_DIV invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_DIV invalid stack length")
 
   def op_div(%__MODULE__{stack: [a, b | stack]} = vm) do
     val = div(ScriptNum.decode(b), ScriptNum.decode(a))
@@ -879,8 +891,8 @@ defmodule BSV.VM do
   """
   @spec op_mod(t()) :: t()
   def op_mod(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_MOD invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_MOD invalid stack length")
 
   def op_mod(%__MODULE__{stack: [a, b | stack]} = vm) do
     val = rem(ScriptNum.decode(b), ScriptNum.decode(a))
@@ -894,24 +906,30 @@ defmodule BSV.VM do
   """
   @spec op_lshift(t()) :: t()
   def op_lshift(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_LSHIFT invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_LSHIFT invalid stack length")
 
   def op_lshift(%__MODULE__{stack: [top, bin | stack]} = vm) do
     case ScriptNum.decode(top) do
       len when len < 0 ->
         err(vm, "OP_LSHIFT invalid shift length")
+
       len ->
-        res = bin
-        |> :binary.decode_unsigned()
-        |> bsl(len)
-        |> :binary.encode_unsigned()
-        res = case byte_size(res) - byte_size(bin) do
-          diff when diff > 0 ->
-            :binary.part(res, diff, byte_size(bin))
-          diff ->
-            :binary.copy(<<0>>, diff * -1) <> res
-        end
+        res =
+          bin
+          |> :binary.decode_unsigned()
+          |> bsl(len)
+          |> :binary.encode_unsigned()
+
+        res =
+          case byte_size(res) - byte_size(bin) do
+            diff when diff > 0 ->
+              :binary.part(res, diff, byte_size(bin))
+
+            diff ->
+              :binary.copy(<<0>>, diff * -1) <> res
+          end
+
         put_in(vm.stack, [res | stack])
     end
   end
@@ -923,24 +941,30 @@ defmodule BSV.VM do
   """
   @spec op_rshift(t()) :: t()
   def op_rshift(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_RSHIFT invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_RSHIFT invalid stack length")
 
   def op_rshift(%__MODULE__{stack: [top, bin | stack]} = vm) do
     case ScriptNum.decode(top) do
       len when len < 0 ->
         err(vm, "OP_RSHIFT invalid shift length")
+
       len ->
-        res = bin
-        |> :binary.decode_unsigned()
-        |> bsr(len)
-        |> :binary.encode_unsigned()
-        res = case byte_size(res) - byte_size(bin) do
-          diff when diff > 0 ->
-            :binary.part(res, diff, byte_size(bin))
-          diff ->
-            :binary.copy(<<0>>, diff * -1) <> res
-        end
+        res =
+          bin
+          |> :binary.decode_unsigned()
+          |> bsr(len)
+          |> :binary.encode_unsigned()
+
+        res =
+          case byte_size(res) - byte_size(bin) do
+            diff when diff > 0 ->
+              :binary.part(res, diff, byte_size(bin))
+
+            diff ->
+              :binary.copy(<<0>>, diff * -1) <> res
+          end
+
         put_in(vm.stack, [res | stack])
     end
   end
@@ -951,8 +975,8 @@ defmodule BSV.VM do
   """
   @spec op_booland(t()) :: t()
   def op_booland(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_BOOLAND invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_BOOLAND invalid stack length")
 
   def op_booland(%__MODULE__{stack: [a, b | stack]} = vm) do
     res = if true?(a) and true?(b), do: 1, else: 0
@@ -965,8 +989,8 @@ defmodule BSV.VM do
   """
   @spec op_boolor(t()) :: t()
   def op_boolor(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_BOOLOR invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_BOOLOR invalid stack length")
 
   def op_boolor(%__MODULE__{stack: [a, b | stack]} = vm) do
     res = if true?(a) or true?(b), do: 1, else: 0
@@ -979,8 +1003,8 @@ defmodule BSV.VM do
   """
   @spec op_numequal(t()) :: t()
   def op_numequal(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_NUMEQUAL invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_NUMEQUAL invalid stack length")
 
   def op_numequal(%__MODULE__{opts: %{simulate: true}, stack: [_a, _b | stack]} = vm),
     do: put_in(vm.stack, [ScriptNum.encode(1) | stack])
@@ -1002,8 +1026,8 @@ defmodule BSV.VM do
   """
   @spec op_numnotequal(t()) :: t()
   def op_numnotequal(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_NUMNOTEQUAL invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_NUMNOTEQUAL invalid stack length")
 
   def op_numnotequal(%__MODULE__{stack: [a, b | stack]} = vm) do
     res = if ScriptNum.decode(a) != ScriptNum.decode(b), do: 1, else: 0
@@ -1017,8 +1041,8 @@ defmodule BSV.VM do
   """
   @spec op_lessthan(t()) :: t()
   def op_lessthan(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_LESSTHAN invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_LESSTHAN invalid stack length")
 
   def op_lessthan(%__MODULE__{stack: [a, b | stack]} = vm) do
     res = if ScriptNum.decode(a) > ScriptNum.decode(b), do: 1, else: 0
@@ -1032,8 +1056,8 @@ defmodule BSV.VM do
   """
   @spec op_greaterthan(t()) :: t()
   def op_greaterthan(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_GREATERTHAN invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_GREATERTHAN invalid stack length")
 
   def op_greaterthan(%__MODULE__{stack: [a, b | stack]} = vm) do
     res = if ScriptNum.decode(a) < ScriptNum.decode(b), do: 1, else: 0
@@ -1047,8 +1071,8 @@ defmodule BSV.VM do
   """
   @spec op_lessthanorequal(t()) :: t()
   def op_lessthanorequal(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_LESSTHANOREQUAL invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_LESSTHANOREQUAL invalid stack length")
 
   def op_lessthanorequal(%__MODULE__{stack: [a, b | stack]} = vm) do
     res = if ScriptNum.decode(a) >= ScriptNum.decode(b), do: 1, else: 0
@@ -1062,8 +1086,8 @@ defmodule BSV.VM do
   """
   @spec op_greaterthanorequal(t()) :: t()
   def op_greaterthanorequal(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_GREATERTHANOREQUAL invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_GREATERTHANOREQUAL invalid stack length")
 
   def op_greaterthanorequal(%__MODULE__{stack: [a, b | stack]} = vm) do
     res = if ScriptNum.decode(a) <= ScriptNum.decode(b), do: 1, else: 0
@@ -1076,8 +1100,8 @@ defmodule BSV.VM do
   """
   @spec op_min(t()) :: t()
   def op_min(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_MIN invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_MIN invalid stack length")
 
   def op_min(%__MODULE__{stack: [a, b | stack]} = vm) do
     val = Enum.min([ScriptNum.decode(a), ScriptNum.decode(b)])
@@ -1090,8 +1114,8 @@ defmodule BSV.VM do
   """
   @spec op_max(t()) :: t()
   def op_max(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_MAX invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_MAX invalid stack length")
 
   def op_max(%__MODULE__{stack: [a, b | stack]} = vm) do
     val = Enum.max([ScriptNum.decode(a), ScriptNum.decode(b)])
@@ -1105,8 +1129,8 @@ defmodule BSV.VM do
   """
   @spec op_within(t()) :: t()
   def op_within(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 3,
-    do: err(vm, "OP_WITHIN invalid stack length")
+      when length(stack) < 3,
+      do: err(vm, "OP_WITHIN invalid stack length")
 
   def op_within(%__MODULE__{stack: [max, min, sub | stack]} = vm) do
     val = ScriptNum.decode(sub)
@@ -1119,6 +1143,7 @@ defmodule BSV.VM do
   """
   @spec op_ripemd160(t()) :: t()
   def op_ripemd160(%__MODULE__{stack: []} = vm), do: err(vm, "OP_RIPEMD160 stack empty")
+
   def op_ripemd160(%__MODULE__{stack: [top | stack]} = vm) do
     hash = :crypto.hash(:ripemd160, top)
     put_in(vm.stack, [hash | stack])
@@ -1129,6 +1154,7 @@ defmodule BSV.VM do
   """
   @spec op_sha1(t()) :: t()
   def op_sha1(%__MODULE__{stack: []} = vm), do: err(vm, "OP_SHA1 stack empty")
+
   def op_sha1(%__MODULE__{stack: [top | stack]} = vm) do
     hash = :crypto.hash(:sha, top)
     put_in(vm.stack, [hash | stack])
@@ -1139,6 +1165,7 @@ defmodule BSV.VM do
   """
   @spec op_sha256(t()) :: t()
   def op_sha256(%__MODULE__{stack: []} = vm), do: err(vm, "OP_SHA256 stack empty")
+
   def op_sha256(%__MODULE__{stack: [top | stack]} = vm) do
     hash = :crypto.hash(:sha256, top)
     put_in(vm.stack, [hash | stack])
@@ -1149,6 +1176,7 @@ defmodule BSV.VM do
   """
   @spec op_hash160(t()) :: t()
   def op_hash160(%__MODULE__{stack: []} = vm), do: err(vm, "OP_HASH160 stack empty")
+
   def op_hash160(%__MODULE__{stack: [top | stack]} = vm) do
     hash = :crypto.hash(:ripemd160, :crypto.hash(:sha256, top))
     put_in(vm.stack, [hash | stack])
@@ -1159,6 +1187,7 @@ defmodule BSV.VM do
   """
   @spec op_hash256(t()) :: t()
   def op_hash256(%__MODULE__{stack: []} = vm), do: err(vm, "OP_HASH256 stack empty")
+
   def op_hash256(%__MODULE__{stack: [top | stack]} = vm) do
     hash = :crypto.hash(:sha256, :crypto.hash(:sha256, top))
     put_in(vm.stack, [hash | stack])
@@ -1171,18 +1200,19 @@ defmodule BSV.VM do
   """
   @spec op_checksig(t()) :: t()
   def op_checksig(%__MODULE__{stack: stack} = vm)
-    when length(stack) < 2,
-    do: err(vm, "OP_CHECKSIG invalid stack length")
+      when length(stack) < 2,
+      do: err(vm, "OP_CHECKSIG invalid stack length")
 
   def op_checksig(%__MODULE__{opts: %{simulate: true}, stack: [_pk, _sig | stack]} = vm),
     do: put_in(vm.stack, [<<1>> | stack])
 
-  def op_checksig(%__MODULE__{
-    ctx: {%Tx{} = tx, vin, %TxOut{} = txout},
-    stack: [pubkey, signature | stack]
-  } = vm)
-    when is_integer(vin)
-  do
+  def op_checksig(
+        %__MODULE__{
+          ctx: {%Tx{} = tx, vin, %TxOut{} = txout},
+          stack: [pubkey, signature | stack]
+        } = vm
+      )
+      when is_integer(vin) do
     if Sig.verify(signature, tx, vin, txout, PubKey.from_binary!(pubkey)),
       do: put_in(vm.stack, [<<1>> | stack]),
       else: put_in(vm.stack, [<<>> | stack])
@@ -1214,37 +1244,38 @@ defmodule BSV.VM do
 
   def op_checkmultisig(%__MODULE__{opts: %{simulate: true}, stack: [pk_length | stack]} = vm) do
     with {_pubkeys, [sig_length | stack]} <- Enum.split(stack, ScriptNum.decode(pk_length)),
-         {_sigs, [_junk | stack]} <- Enum.split(stack, ScriptNum.decode(sig_length))
-    do
+         {_sigs, [_junk | stack]} <- Enum.split(stack, ScriptNum.decode(sig_length)) do
       put_in(vm.stack, [<<1>> | stack])
     else
       {_ignore, stack} -> put_in(vm.stack, [<<>> | stack])
     end
   end
 
-  def op_checkmultisig(%__MODULE__{
-    ctx: {%Tx{} = tx, vin, %TxOut{} = txout},
-    stack: [pk_length | stack]
-  } = vm)
-    when is_integer(vin)
-  do
+  def op_checkmultisig(
+        %__MODULE__{
+          ctx: {%Tx{} = tx, vin, %TxOut{} = txout},
+          stack: [pk_length | stack]
+        } = vm
+      )
+      when is_integer(vin) do
     with {pubkeys, [sig_length | stack]} <- Enum.split(stack, ScriptNum.decode(pk_length)),
-         {sigs, [_junk | stack]} <- Enum.split(stack, ScriptNum.decode(sig_length))
-    do
+         {sigs, [_junk | stack]} <- Enum.split(stack, ScriptNum.decode(sig_length)) do
       sigs = Enum.reverse(sigs)
       pubkeys = Enum.reverse(pubkeys)
 
       # Iterate over sigs and build list of valid sigs and used keys
-      {valid, _} = Enum.reduce(sigs, {[], []}, fn signature, {valid, usedkeys} ->
-        # Iterate keys minus used keys until signature verifies
-        Enum.reduce_while(pubkeys -- usedkeys, {valid, usedkeys}, fn pubkey, {valid, usedkeys} ->
-          if Sig.verify(signature, tx, vin, txout, PubKey.from_binary!(pubkey)),
-            do: {:halt, {[signature | valid], [pubkey | usedkeys]}},
-            else: {:cont, {valid, [pubkey | usedkeys]}}
+      {valid, _} =
+        Enum.reduce(sigs, {[], []}, fn signature, {valid, usedkeys} ->
+          # Iterate keys minus used keys until signature verifies
+          Enum.reduce_while(pubkeys -- usedkeys, {valid, usedkeys}, fn pubkey,
+                                                                       {valid, usedkeys} ->
+            if Sig.verify(signature, tx, vin, txout, PubKey.from_binary!(pubkey)),
+              do: {:halt, {[signature | valid], [pubkey | usedkeys]}},
+              else: {:cont, {valid, [pubkey | usedkeys]}}
+          end)
         end)
-      end)
 
-      case Enum.all?(sigs, & &1 in valid) do
+      case Enum.all?(sigs, &(&1 in valid)) do
         true -> put_in(vm.stack, [<<1>> | stack])
         _ -> put_in(vm.stack, [<<>> | stack])
       end
@@ -1284,5 +1315,4 @@ defmodule BSV.VM do
   defp true?(<<0>>), do: false
   defp true?(<<128>>), do: false
   defp true?(_), do: true
-
 end

@@ -29,7 +29,7 @@ defmodule BSV do
   ```elixir
   def deps do
     [
-      {:bsv, "~> #{Mix.Project.config[:version]}"}
+      {:bsv, "~> #{Mix.Project.config()[:version]}"}
     ]
   end
   ```
@@ -195,7 +195,7 @@ defmodule BSV do
   @typedoc "Bitcoin network"
   @type network() :: :main | :test
 
-  @version Mix.Project.config[:version]
+  @version Mix.Project.config()[:version]
 
   @doc """
   Returns the currently configured Bitcoin network.
@@ -206,7 +206,6 @@ defmodule BSV do
   @doc """
   Returns the version of the BSV-ex hex package.
   """
-  @spec version() :: String.t
+  @spec version() :: String.t()
   def version(), do: @version
-
 end

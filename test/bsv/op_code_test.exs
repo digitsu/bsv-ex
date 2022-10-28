@@ -48,6 +48,4 @@ defmodule BSV.OpCodeTest do
       end
     end
   end
-
-
 end

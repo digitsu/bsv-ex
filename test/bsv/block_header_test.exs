@@ -5,8 +5,12 @@ defmodule BSV.BlockHeaderTest do
   @block_header_hex "0100000005050505050505050505050505050505050505050505050505050505050505050909090909090909090909090909090909090909090909090909090909090909020000000300000004000000"
   @block_header %BlockHeader{
     version: 1,
-    prev_hash: <<5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5>>,
-    merkle_root: <<9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9>>,
+    prev_hash:
+      <<5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
+        5, 5>>,
+    merkle_root:
+      <<9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9, 9,
+        9, 9>>,
     time: 2,
     bits: 3,
     nonce: 4
@@ -21,7 +25,8 @@ defmodule BSV.BlockHeaderTest do
     end
 
     test "returns error with invalid header" do
-      assert {:error, _error} = BlockHeader.from_binary("010000000505050505050505050505050505", encoding: :hex)
+      assert {:error, _error} =
+               BlockHeader.from_binary("010000000505050505050505050505050505", encoding: :hex)
     end
   end
 
@@ -44,5 +49,4 @@ defmodule BSV.BlockHeaderTest do
       assert header == @block_header_hex
     end
   end
-
 end

@@ -31,20 +31,20 @@ defmodule BSV.ExtKey do
 
   @typedoc "Extended key struct"
   @type t() :: %__MODULE__{
-    version: binary(),
-    depth: integer(),
-    fingerprint: binary(),
-    child_index: integer(),
-    chain_code: binary(),
-    privkey: PrivKey.t() | nil,
-    pubkey: PubKey.t()
-  }
+          version: binary(),
+          depth: integer(),
+          fingerprint: binary(),
+          child_index: integer(),
+          chain_code: binary(),
+          privkey: PrivKey.t() | nil,
+          pubkey: PubKey.t()
+        }
 
   @typedoc "Serialised extended private key (xprv)"
-  @type xprv() :: String.t
+  @type xprv() :: String.t()
 
   @typedoc "Serialised extended public key (xpub)"
-  @type xpub() :: String.t
+  @type xpub() :: String.t()
 
   @typedoc """
   Derivation path
@@ -70,7 +70,7 @@ defmodule BSV.ExtKey do
   child extended private key. It is not possible to derive a hardened child
   extended public key from the same master key.
   """
-  @type derivation_path() :: String.t
+  @type derivation_path() :: String.t()
 
   @privkey_version_bytes %{
     main: <<4, 136, 173, 228>>,
@@ -109,17 +109,19 @@ defmodule BSV.ExtKey do
     encoding = Keyword.get(opts, :encoding)
     version = @privkey_version_bytes[BSV.network()]
 
-    with {:ok, seed} when bit_size(seed) >= 128 and bit_size(seed) <= 512 <- decode(seed, encoding) do
+    with {:ok, seed} when bit_size(seed) >= 128 and bit_size(seed) <= 512 <-
+           decode(seed, encoding) do
       <<d::binary-32, chain_code::binary-32>> = Hash.sha512_hmac(seed, "Bitcoin seed")
       privkey = PrivKey.from_binary!(d)
       pubkey = PubKey.from_privkey(privkey)
 
-      {:ok, struct(__MODULE__, [
-        version: version,
-        chain_code: chain_code,
-        privkey: privkey,
-        pubkey: pubkey
-      ])}
+      {:ok,
+       struct(__MODULE__,
+         version: version,
+         chain_code: chain_code,
+         privkey: privkey,
+         pubkey: pubkey
+       )}
     else
       {:ok, seed} ->
         {:error, {:invalid_seed, byte_size(seed)}}
@@ -139,6 +141,7 @@ defmodule BSV.ExtKey do
     case from_seed(seed, opts) do
       {:ok, extkey} ->
         extkey
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
@@ -207,15 +210,16 @@ defmodule BSV.ExtKey do
       privkey = PrivKey.from_binary!(d)
       pubkey = PubKey.from_privkey(privkey)
 
-      {:ok, struct(__MODULE__, [
-        version: version,
-        depth: depth,
-        fingerprint: fingerprint,
-        child_index: child_index,
-        chain_code: chain_code,
-        privkey: privkey,
-        pubkey: pubkey
-      ])}
+      {:ok,
+       struct(__MODULE__,
+         version: version,
+         depth: depth,
+         fingerprint: fingerprint,
+         child_index: child_index,
+         chain_code: chain_code,
+         privkey: privkey,
+         pubkey: pubkey
+       )}
     else
       _error ->
         {:error, :invalid_xprv}
@@ -237,14 +241,15 @@ defmodule BSV.ExtKey do
 
       pubkey = PubKey.from_binary!(pubkey)
 
-      {:ok, struct(__MODULE__, [
-        version: version,
-        depth: depth,
-        fingerprint: fingerprint,
-        child_index: child_index,
-        chain_code: chain_code,
-        pubkey: pubkey
-      ])}
+      {:ok,
+       struct(__MODULE__,
+         version: version,
+         depth: depth,
+         fingerprint: fingerprint,
+         child_index: child_index,
+         chain_code: chain_code,
+         pubkey: pubkey
+       )}
     else
       _error ->
         {:error, :invalid_xpub}
@@ -262,11 +267,11 @@ defmodule BSV.ExtKey do
     case from_string(data) do
       {:ok, extkey} ->
         extkey
+
       {:error, error} ->
         raise BSV.DecodeError, error
     end
   end
-
 
   @doc """
   Converts the given `t:BSV.ExtKey.t/0` into a public extended key by dropping
@@ -295,6 +300,7 @@ defmodule BSV.ExtKey do
   def to_string(%__MODULE__{privkey: %PrivKey{}} = extkey) do
     <<version_byte, version::binary>> = @privkey_version_bytes[BSV.network()]
     privkey = PrivKey.to_binary(extkey.privkey)
+
     <<
       version::binary,
       extkey.depth::8,
@@ -310,6 +316,7 @@ defmodule BSV.ExtKey do
   def to_string(%__MODULE__{privkey: nil, pubkey: %PubKey{}} = extkey) do
     <<version_byte, version::binary>> = @pubkey_version_bytes[BSV.network()]
     pubkey = PubKey.to_binary(extkey.pubkey)
+
     <<
       version::binary,
       extkey.depth::8,
@@ -352,6 +359,7 @@ defmodule BSV.ExtKey do
     case String.match?(path, ~r/^[mM](\/\d+'?)+/) do
       true ->
         derive_pathlist(extkey, get_pathlist(path))
+
       false ->
         raise ArgumentError, "Invalid derivation path"
     end
@@ -386,11 +394,11 @@ defmodule BSV.ExtKey do
     do: derive_pathlist(to_public(key), {:public, pathlist})
 
   defp derive_pathlist(%{privkey: nil}, {:private, _pathlist}),
-    do: raise ArgumentError, "Cannot derive private child from public parent"
+    do: raise(ArgumentError, "Cannot derive private child from public parent")
 
   defp derive_pathlist(key, {kind, [index | rest]}) do
     with {privkey, pubkey, child_chain} <- derive_key(key, index) do
-      struct(__MODULE__, [
+      struct(__MODULE__,
         version: key.version,
         depth: key.depth + 1,
         fingerprint: get_fingerprint(key),
@@ -398,7 +406,7 @@ defmodule BSV.ExtKey do
         chain_code: child_chain,
         privkey: privkey,
         pubkey: pubkey
-      ])
+      )
       |> derive_pathlist({kind, rest})
     end
   end
@@ -406,6 +414,7 @@ defmodule BSV.ExtKey do
   # Derives an extended private or public key from the given index
   defp derive_key(extkey, index) when normal?(index) do
     pubkey = PubKey.to_binary(extkey.pubkey)
+
     <<pubkey::binary, index::32>>
     |> Hash.sha512_hmac(extkey.chain_code)
     |> derive_keypair(extkey)
@@ -413,38 +422,41 @@ defmodule BSV.ExtKey do
 
   defp derive_key(%{privkey: %PrivKey{}} = extkey, index) when hardened?(index) do
     privkey = PrivKey.to_binary(extkey.privkey)
+
     <<0::8, privkey::binary, index::32>>
     |> Hash.sha512_hmac(extkey.chain_code)
     |> derive_keypair(extkey)
   end
 
   defp derive_key(%{privkey: nil}, index) when hardened?(index),
-    do: raise ArgumentError, "Cannot derive hardened public child"
+    do: raise(ArgumentError, "Cannot derive hardened public child")
 
   # Derives a key pair
   defp derive_keypair(
-    <<derived_key::256, child_chain::binary>>,
-    %{privkey: %PrivKey{d: <<d::256>>}}
-  ) do
+         <<derived_key::256, child_chain::binary>>,
+         %{privkey: %PrivKey{d: <<d::256>>}}
+       ) do
     curve_order = Curvy.Curve.secp256k1()[:n]
 
-    privkey = derived_key
-    |> Kernel.+(d)
-    |> rem(curve_order)
-    |> :binary.encode_unsigned()
-    |> pad_bytes()
-    |> PrivKey.from_binary!()
+    privkey =
+      derived_key
+      |> Kernel.+(d)
+      |> rem(curve_order)
+      |> :binary.encode_unsigned()
+      |> pad_bytes()
+      |> PrivKey.from_binary!()
 
     {privkey, PubKey.from_privkey(privkey), child_chain}
   end
 
   defp derive_keypair(
-    <<derived_key::256, child_chain::binary>>,
-    %{privkey: nil, pubkey: %PubKey{}} = extkey
-  ) do
-    point = Curvy.Curve.secp256k1()[:G]
-    |> Point.mul(derived_key)
-    |> Point.add(extkey.pubkey.point)
+         <<derived_key::256, child_chain::binary>>,
+         %{privkey: nil, pubkey: %PubKey{}} = extkey
+       ) do
+    point =
+      Curvy.Curve.secp256k1()[:G]
+      |> Point.mul(derived_key)
+      |> Point.add(extkey.pubkey.point)
 
     {nil, %PubKey{point: point}, child_chain}
   end
@@ -459,10 +471,11 @@ defmodule BSV.ExtKey do
 
   # Gets a fingerpinrt from the extended public key
   defp get_fingerprint(%{pubkey: %PubKey{}} = extkey) do
-    <<fingerprint::binary-4, _::binary>> = extkey.pubkey
-    |> PubKey.to_binary()
-    |> Hash.sha256_ripemd160()
+    <<fingerprint::binary-4, _::binary>> =
+      extkey.pubkey
+      |> PubKey.to_binary()
+      |> Hash.sha256_ripemd160()
+
     fingerprint
   end
-
 end

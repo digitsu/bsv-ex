@@ -41,8 +41,7 @@ defmodule BSV.Contract.P2MS do
 
   @impl true
   def locking_script(ctx, %{pubkeys: pubkeys, threshold: threshold})
-    when is_list(pubkeys)
-  do
+      when is_list(pubkeys) do
     ctx
     |> push(threshold)
     |> push(Enum.map(pubkeys, &PubKey.to_binary/1))
@@ -56,5 +55,4 @@ defmodule BSV.Contract.P2MS do
     |> op_0
     |> sig(privkeys)
   end
-
 end

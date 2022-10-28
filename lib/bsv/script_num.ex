@@ -27,6 +27,7 @@ defmodule BSV.ScriptNum do
   """
   @spec decode(binary()) :: integer()
   def decode(<<>>), do: 0
+
   def decode(bin) when is_binary(bin) do
     bin
     |> reverse_bin()
@@ -34,9 +35,9 @@ defmodule BSV.ScriptNum do
   end
 
   # Decodes the number
-  defp decode_num(<<n, bin::binary >>)
-    when (n &&& 0x80) != 0,
-    do: -1 * decode_num(<<bxor(n, 0x80)>> <> bin)
+  defp decode_num(<<n, bin::binary>>)
+       when (n &&& 0x80) != 0,
+       do: -1 * decode_num(<<bxor(n, 0x80)>> <> bin)
 
   defp decode_num(bin),
     do: :binary.decode_unsigned(bin, :big)
@@ -57,17 +58,19 @@ defmodule BSV.ScriptNum do
   """
   @spec encode(number()) :: binary()
   def encode(0), do: <<>>
-  def encode(n) when is_integer(n) do
-    <<first, rest::binary>> = abs(n)
-    |> :binary.encode_unsigned(:big)
 
-    prefix = if (first &&& 0x80) == 0x80 do
-      <<n < 0 && 0x80 || 0x00, first>>
-    else
-      <<n < 0 && bxor(first, 0x80) || first>>
-    end
+  def encode(n) when is_integer(n) do
+    <<first, rest::binary>> =
+      abs(n)
+      |> :binary.encode_unsigned(:big)
+
+    prefix =
+      if (first &&& 0x80) == 0x80 do
+        <<(n < 0 && 0x80) || 0x00, first>>
+      else
+        <<(n < 0 && bxor(first, 0x80)) || first>>
+      end
 
     reverse_bin(prefix <> rest)
   end
-
 end

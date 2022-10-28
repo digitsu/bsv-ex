@@ -41,5 +41,4 @@ defmodule BSV.KeyPairTest do
       refute pubkey.compressed
     end
   end
-
 end

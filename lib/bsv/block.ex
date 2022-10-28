@@ -13,9 +13,9 @@ defmodule BSV.Block do
 
   @typedoc "Block struct"
   @type t() :: %__MODULE__{
-    header: BlockHeader.t(),
-    txns: list(Tx.t())
-  }
+          header: BlockHeader.t(),
+          txns: list(Tx.t())
+        }
 
   @typedoc """
   Merkle root - the result of hashing all of the transactions contained in the
@@ -64,8 +64,7 @@ defmodule BSV.Block do
     encoding = Keyword.get(opts, :encoding)
 
     with {:ok, data} <- decode(data, encoding),
-         {:ok, block, _rest} <- Serializable.parse(%__MODULE__{}, data)
-    do
+         {:ok, block, _rest} <- Serializable.parse(%__MODULE__{}, data) do
       {:ok, block}
     end
   end
@@ -112,26 +111,27 @@ defmodule BSV.Block do
   def validate_merkle_root(%__MODULE__{header: header} = block),
     do: calc_merkle_root(block) == (header && header.merkle_root)
 
-
   defimpl Serializable do
     @impl true
     def parse(block, data) do
       with {:ok, header, data} <- Serializable.parse(%BlockHeader{}, data),
-           {:ok, txns, rest} <- VarInt.parse_items(data, Tx)
-      do
-        {:ok, struct(block, [
-          header: header,
-          txns: txns,
-        ]), rest}
+           {:ok, txns, rest} <- VarInt.parse_items(data, Tx) do
+        {:ok,
+         struct(block,
+           header: header,
+           txns: txns
+         ), rest}
       end
     end
 
     @impl true
     def serialize(%{header: header, txns: txns}) do
       header_data = Serializable.serialize(header)
-      txns_data = Enum.reduce(txns, VarInt.encode(length(txns)), fn tx, data ->
-        data <> Serializable.serialize(tx)
-      end)
+
+      txns_data =
+        Enum.reduce(txns, VarInt.encode(length(txns)), fn tx, data ->
+          data <> Serializable.serialize(tx)
+        end)
 
       <<
         header_data::binary,
@@ -139,5 +139,4 @@ defmodule BSV.Block do
       >>
     end
   end
-
 end
